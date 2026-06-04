@@ -317,17 +317,68 @@ class ViaStitchingDialog(viastitching_gui):
                         return False
 
         return True
-
     def CheckOverlap(self, via):
-        """Check if via overlaps or interfere with other items on the board.
+        """Check if via overlaps or interfere with other items on the board."""
+        
+        safe_margin = pcbnew.FromMM(0.35) 
+        min_hole_dist = pcbnew.FromMM(0.5)
+        
+        # --- 0. Edge ccuts check (Edge.Cuts) ---
+        # set edge cuts range clearance (es. 0.5 mm)
+        edge_clearance = pcbnew.FromMM(0.5) 
+        check_dist = int(via.GetWidth() // 2 + edge_clearance)
+        
+        for edge in self.board_edges:
+            if edge.HitTest(via.GetPosition(), check_dist):
+                return True
+        # ---------------------------------------------
 
-        Parameters:
-            via (pcbnew.VIA): Via to be checked
+        via_bbox = via.GetBoundingBox()
+        via_bbox.Inflate(safe_margin)
 
-        Returns:
-            bool: True if via overlaps with an item, False otherwise.
-        """
+        for item in self.overlappings:
+            
+            # 1. ignore copper filled zones 
+            if type(item).__name__ in ['ZONE', 'FP_ZONE', 'PCB_ZONE', 'ZONE_CONTAINER']:
+                continue
 
+            # 2. handling of the same net points 
+            if hasattr(item, 'GetNetCode') and item.GetNetCode() == via.GetNetCode():
+                if type(item) is pcbnew.PCB_TRACK:
+                    continue 
+                elif type(item) is pcbnew.PCB_VIA:
+                    # if same net check clearance
+                    dist = math.hypot(via.GetPosition().x - item.GetPosition().x, via.GetPosition().y - item.GetPosition().y)
+                    if dist < (via.GetDrillValue() / 2 + item.GetDrillValue() / 2 + min_hole_dist):
+                        return True
+                    continue
+                
+
+            # 3. check collisions with Pads
+            if type(item) is pcbnew.PAD:
+                via_layers = set(via.GetLayerSet().Seq())
+                pad_layers = set(item.GetLayerSet().Seq())
+                common_layers = via_layers & pad_layers
+                if common_layers:
+                    p = via.GetPosition()
+                    accuracy = int(via.GetWidth() // 2 + safe_margin)
+                    if any(item.HitTest(p, accuracy, layer) for layer in common_layers):
+                        return True
+                        
+            # 4. check collisions with VIAS (other nets)
+            elif type(item) is pcbnew.PCB_VIA:
+                if item.GetBoundingBox().Intersects(via_bbox):
+                    return True
+                    
+            # 5. check collisions with other tracks (other nets)
+            elif type(item) is pcbnew.PCB_TRACK:
+                if item.GetBoundingBox().Intersects(via_bbox):
+                    width = item.GetWidth()
+                    dist, _ = pnt2line(via.GetPosition(), item.GetStart(), item.GetEnd())
+                    if dist <= self.clearance + width // 2 + via.GetWidth() / 2 + safe_margin:
+                        return True
+                        
+        return False
         for item in self.overlappings:
             if type(item) is pcbnew.PAD:
                 # Check with HitTest() rather than GetBoundingBox() to handle round+custom pad shapes
@@ -381,13 +432,13 @@ class ViaStitchingDialog(viastitching_gui):
         netcode = self.board.GetNetcodeFromNetname(netname)
         # commit = pcbnew.COMMIT()
         viacount = 0
-        x = (left + offset_x) % step_x
+        x = left - (left % step_x) + offset_x
 
         # Cycle trough area bounding box checking and implanting vias
         layer_set = self.area.GetLayerSet()
         layers = list(layer_set.Seq())
         while x <= right:
-            y = (top + offset_y) % step_y
+            y = top - (top % step_y) + offset_y
             while y <= bottom:
                 if self.randomize:
                     xp = x + random.uniform(-1, 1) * step_x / 5
@@ -397,12 +448,12 @@ class ViaStitchingDialog(viastitching_gui):
                     yp = y
 
                 if hasattr(pcbnew, 'VECTOR2I'):
-                    p = pcbnew.VECTOR2I(xp, yp)
+                    p = pcbnew.VECTOR2I(int(xp), int(yp))
                 else:
                     if(hasattr(pcbnew, 'wxPoint')):
-                        p = pcbnew.wxPoint(xp, yp)
+                        p = pcbnew.wxPoint(int(xp), int(yp))
 
-                if all(self.area.HitTestFilledArea(layer, p, 0) for layer in layers):
+                if any(self.area.HitTestFilledArea(layer, p, 0) for layer in layers):
                     via = pcbnew.PCB_VIA(self.board)
                     via.SetPosition(p)
                     via.SetLayerSet(layer_set)
@@ -593,6 +644,13 @@ def pnt2line(point: pcbnew.wxPoint, start: pcbnew.wxPoint, end: pcbnew.wxPoint):
     line_vec = nd - strt
     pnt_vec = pnt - strt
     line_len = norm(line_vec)
+
+    # --- ANTI CRASH ---
+    if line_len < 0.0001:
+        dist = norm(pnt_vec)
+        return dist, strt
+    # --- END PATCH ---
+
     line_unitvec = line_vec / line_len
     pnt_vec_scaled = pnt_vec / line_len
     t = dot(line_unitvec, pnt_vec_scaled)
