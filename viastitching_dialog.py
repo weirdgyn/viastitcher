@@ -462,6 +462,34 @@ class ViaStitchingDialog(viastitching_gui):
                     if dist <= self.clearance + width // 2 + via.GetWidth() / 2:
                         return True
         return False
+
+    def HasFilledCopperAt(self, position, layers, netcode, radius):
+        """Return whether the selected net has filled copper around a via."""
+
+        samples = [position]
+        for index in range(32):
+            angle = 2 * math.pi * index / 32
+            sample_x = int(position.x + radius * math.cos(angle))
+            sample_y = int(position.y + radius * math.sin(angle))
+            if hasattr(pcbnew, "VECTOR2I"):
+                samples.append(pcbnew.VECTOR2I(sample_x, sample_y))
+            else:
+                samples.append(pcbnew.wxPoint(sample_x, sample_y))
+
+        zones = [zone for zone in self.board.Zones() if zone.GetNetCode() == netcode]
+        for layer in layers:
+            if not all(
+                any(
+                    zone.HitTestFilledArea(layer, sample, 0)
+                    for zone in zones
+                    if layer in set(zone.GetLayerSet().Seq())
+                )
+                for sample in samples
+            ):
+                return False
+
+        return True
+
     def FillupArea(self):
         """Fills selected area with vias."""
 
@@ -504,7 +532,7 @@ class ViaStitchingDialog(viastitching_gui):
                     if hasattr(pcbnew, "wxPoint"):
                         p = pcbnew.wxPoint(int(xp), int(yp))
 
-                if any(self.area.HitTestFilledArea(layer, p, 0) for layer in layers):
+                if self.HasFilledCopperAt(p, layers, netcode, viasize / 2):
                     via = pcbnew.PCB_VIA(self.board)
                     via.SetPosition(p)
                     via.SetLayerSet(layer_set)
