@@ -40,6 +40,10 @@ class viastitching_gui ( wx.Dialog ):
 
 		bMainSizer.Add( bHSizer1, 1, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5 )
 
+		self.m_chkOnlyFilledCopper = wx.CheckBox( self, wx.ID_ANY, _(u"Only place vias that connect filled copper of the selected net on multiple layers"), wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_chkOnlyFilledCopper.SetValue(True)
+		bMainSizer.Add( self.m_chkOnlyFilledCopper, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5 )
+
 		bHSizer2 = wx.BoxSizer( wx.HORIZONTAL )
 
 		self.m_lblVia = wx.StaticText( self, wx.ID_ANY, _(u"Size / drill"), wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -131,7 +135,6 @@ class viastitching_gui ( wx.Dialog ):
 
 		self.m_chkRandomize = wx.CheckBox( self, wx.ID_ANY, _(u"Randomize"), wx.DefaultPosition, wx.DefaultSize, 0 )
 		bHSizer4.Add( self.m_chkRandomize, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
-
 
 		bMainSizer.Add( bHSizer4, 1, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
