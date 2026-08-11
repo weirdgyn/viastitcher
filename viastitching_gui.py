@@ -132,6 +132,10 @@ class viastitching_gui ( wx.Dialog ):
 		self.m_chkRandomize = wx.CheckBox( self, wx.ID_ANY, _(u"Randomize"), wx.DefaultPosition, wx.DefaultSize, 0 )
 		bHSizer4.Add( self.m_chkRandomize, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
 
+		self.m_chkOnlyFilledCopper = wx.CheckBox( self, wx.ID_ANY, _(u"Place vias only on filled copper of the selected net across all layers"), wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_chkOnlyFilledCopper.SetValue(True)
+		bHSizer4.Add( self.m_chkOnlyFilledCopper, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
+
 
 		bMainSizer.Add( bHSizer4, 1, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 

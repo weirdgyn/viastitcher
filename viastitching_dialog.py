@@ -129,6 +129,9 @@ class ViaStitchingDialog(viastitching_gui):
         )
         self.m_txtClearance.SetValue(defaults.get("Clearance", "0"))
         self.m_chkRandomize.SetValue(defaults.get("Randomize", False))
+        self.m_chkOnlyFilledCopper.SetValue(
+            defaults.get("OnlyFilledCopper", True)
+        )
 
         # Get default Vias dimensions
         via_dim_list = self.board.GetViasDimensionsList()
@@ -532,28 +535,37 @@ class ViaStitchingDialog(viastitching_gui):
                     if hasattr(pcbnew, "wxPoint"):
                         p = pcbnew.wxPoint(int(xp), int(yp))
 
-                if self.HasFilledCopperAt(p, layers, netcode, viasize / 2):
-                    via = pcbnew.PCB_VIA(self.board)
-                    via.SetPosition(p)
-                    via.SetLayerSet(layer_set)
-                    via.SetNetCode(netcode)
-                    # Set up via with clearance added to its size-> bounding box check will be OK in worst case, may be too conservative, but additional checks are possible if needed
-                    # TODO: possibly take the clearance from the PCB settings instead of the dialog
-                    # Clearance is all around -> *2
-                    via.SetDrill(drillsize + 2 * clearance)
-                    via.SetWidth(viasize + 2 * clearance)
-                    # via.SetTimeStamp(__timecode__)
-                    if not self.CheckOverlap(via):
-                        # Check clearance only if clearance value differs from 0 (disabled)
-                        if (clearance == 0) or self.CheckClearance(
-                            via, self.area, clearance
-                        ):
-                            via.SetWidth(viasize)
-                            via.SetDrill(drillsize)
-                            self.board.Add(via)
-                            # commit.Add(via)
-                            self.pcb_group.AddItem(via)
-                            viacount += 1
+                if self.m_chkOnlyFilledCopper.GetValue():
+                    if not self.HasFilledCopperAt(p, layers, netcode, viasize / 2):
+                        y += step_y
+                        continue
+                elif not any(
+                    self.area.HitTestFilledArea(layer, p, 0) for layer in layers
+                ):
+                    y += step_y
+                    continue
+
+                via = pcbnew.PCB_VIA(self.board)
+                via.SetPosition(p)
+                via.SetLayerSet(layer_set)
+                via.SetNetCode(netcode)
+                # Set up via with clearance added to its size-> bounding box check will be OK in worst case, may be too conservative, but additional checks are possible if needed
+                # TODO: possibly take the clearance from the PCB settings instead of the dialog
+                # Clearance is all around -> *2
+                via.SetDrill(drillsize + 2 * clearance)
+                via.SetWidth(viasize + 2 * clearance)
+                # via.SetTimeStamp(__timecode__)
+                if not self.CheckOverlap(via):
+                    # Check clearance only if clearance value differs from 0 (disabled)
+                    if (clearance == 0) or self.CheckClearance(
+                        via, self.area, clearance
+                    ):
+                        via.SetWidth(viasize)
+                        via.SetDrill(drillsize)
+                        self.board.Add(via)
+                        # commit.Add(via)
+                        self.pcb_group.AddItem(via)
+                        viacount += 1
                 y += step_y
             x += step_x
 
@@ -587,6 +599,7 @@ class ViaStitchingDialog(viastitching_gui):
             "VOffset": self.m_txtVOffset.GetValue(),
             "Clearance": self.m_txtClearance.GetValue(),
             "Randomize": self.m_chkRandomize.GetValue(),
+            "OnlyFilledCopper": self.m_chkOnlyFilledCopper.GetValue(),
         }
 
         if self.config_textbox is None:
