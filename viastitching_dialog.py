@@ -46,6 +46,7 @@ class ViaStitchingDialog(viastitching_gui):
         """Initialize the brand new instance."""
 
         super(ViaStitchingDialog, self).__init__(None)
+        self.initialized = False
         self.viagroupname = None
         self.SetTitle(_("{0} v{1}").format(__plugin_name__, __version__))
         self.Bind(wx.EVT_CLOSE, self.onCloseWindow)
@@ -134,18 +135,32 @@ class ViaStitchingDialog(viastitching_gui):
         )
 
         # Get default Vias dimensions
-        via_dim_list = self.board.GetViasDimensionsList()
+        via_size = None
+        via_drill = None
+        for via_dims in self.board.GetViasDimensionsList():
+            via_size = via_dims.m_Diameter
+            via_drill = via_dims.m_Drill
 
-        if via_dim_list:
-            via_dims = via_dim_list.pop()
-        else:
-            wx.MessageBox(_("Please set via drill/size in board"))
+        # A new board may not have any custom via presets yet. In that case,
+        # use the dimensions currently selected in Board Setup.
+        if not via_size or not via_drill:
+            design_settings = self.board.GetDesignSettings()
+            if hasattr(design_settings, "GetCurrentViaSize"):
+                via_size = design_settings.GetCurrentViaSize()
+            if hasattr(design_settings, "GetCurrentViaDrill"):
+                via_drill = design_settings.GetCurrentViaDrill()
+
+        if not via_size or not via_drill:
+            wx.MessageBox(
+                _("Please set a valid via diameter and drill size in Board Setup")
+            )
             self.Destroy()
+            return
 
-        self.m_txtViaSize.SetValue("%.6f" % self.ToUserUnit(via_dims.m_Diameter))
-        self.m_txtViaDrillSize.SetValue("%.6f" % self.ToUserUnit(via_dims.m_Drill))
-        via_dim_list.push_back(via_dims)
+        self.m_txtViaSize.SetValue("%.6f" % self.ToUserUnit(via_size))
+        self.m_txtViaDrillSize.SetValue("%.6f" % self.ToUserUnit(via_drill))
         self.overlappings = None
+        self.initialized = True
 
     def GetOverlappingItems(self):
         """Collect overlapping items.
@@ -593,6 +608,7 @@ class ViaStitchingDialog(viastitching_gui):
                     "Tried 1000 different names and all were taken. Please give a name to the zone."
                 )
                 self.Destroy()
+                return
             self.area.SetZoneName(zone_name)
 
         config = {
@@ -685,7 +701,8 @@ def InitViaStitchingDialog(board):
     """Initalize dialog."""
 
     dlg = ViaStitchingDialog(board)
-    dlg.Show(True)
+    if dlg.initialized:
+        dlg.Show(True)
     return dlg
 
 
