@@ -28,7 +28,7 @@ Release packages for KiCad's Plugin and Content Manager are built automatically 
 Release-x.x.x.x
 ```
 
-For example, `Release-0.2.0.0` packages PCM version `0.2.0` with version epoch `0`. Before pushing the tag, update `metadata.json` so its version and epoch match. The workflow creates a GitHub release containing the installable PCM ZIP and a `repository-metadata.json` file with the download URL, SHA-256 checksum, download size, and install size required for submission to the official KiCad addon repository.
+For example, `Release-0.2.0.0` packages PCM version `0.2.0` with version epoch `0`. Before pushing the tag, update `metadata.json` so its version and epoch match. The workflow creates a GitHub release containing the installable PCM ZIP and a `repository-metadata.json` file with the download URL, SHA-256 checksum, download size, and install size required for submission to the official KiCad addon repository. The package uses `viastitching64x64.png` as its PCM icon while retaining `viastitching.png` as the PCB Editor toolbar icon.
 
 ## How it works
 

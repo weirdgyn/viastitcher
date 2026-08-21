@@ -49,9 +49,10 @@ jobs:
           set -euo pipefail
 
           package_root="${RUNNER_TEMP}/viastitching-package"
-          mkdir -p "${package_root}/plugins"
+          mkdir -p "${package_root}/plugins" "${package_root}/resources"
 
           cp metadata.json "${package_root}/metadata.json"
+          cp viastitching64x64.png "${package_root}/resources/icon.png"
           cp \
             __init__.py \
             defaults.json \
