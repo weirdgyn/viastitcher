@@ -1,0 +1,113 @@
+name: Build KiCad PCM release
+
+on:
+  push:
+    tags:
+      - "Release-*.*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Package and publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out tagged revision
+        uses: actions/checkout@v4
+
+      - name: Validate tag and metadata version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ ! "${GITHUB_REF_NAME}" =~ ^Release-([0-9]+\.){3}[0-9]+$ ]]; then
+            echo "Invalid release tag: ${GITHUB_REF_NAME}" >&2
+            echo "Expected Release-x.x.x.x (for example Release-0.2.0.0)." >&2
+            exit 1
+          fi
+
+          release_version="${GITHUB_REF_NAME#Release-}"
+          version="${release_version%.*}"
+          version_epoch="${release_version##*.}"
+          metadata_version="$(jq -r '.versions[0].version' metadata.json)"
+          metadata_epoch="$(jq -r '.versions[0].version_epoch // 0' metadata.json)"
+
+          if [[ "${version}" != "${metadata_version}" || "${version_epoch}" != "${metadata_epoch}" ]]; then
+            echo "Tag ${release_version} does not match metadata version ${metadata_version}, epoch ${metadata_epoch}." >&2
+            exit 1
+          fi
+
+          echo "version=${release_version}" >> "${GITHUB_OUTPUT}"
+          echo "archive=viastitching-${release_version}-pcm.zip" >> "${GITHUB_OUTPUT}"
+
+      - name: Assemble PCM package
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          package_root="${RUNNER_TEMP}/viastitching-package"
+          mkdir -p "${package_root}/plugins"
+
+          cp metadata.json "${package_root}/metadata.json"
+          cp \
+            __init__.py \
+            defaults.json \
+            viastitching.png \
+            viastitching_dialog.py \
+            viastitching_gui.py \
+            viastitching_plugin.py \
+            "${package_root}/plugins/"
+
+          (
+            cd "${package_root}"
+            zip -9 -r "${GITHUB_WORKSPACE}/${{ steps.version.outputs.archive }}" .
+          )
+
+      - name: Create repository metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          archive="${{ steps.version.outputs.archive }}"
+          download_size="$(stat --format=%s "${archive}")"
+          install_size="$(find "${RUNNER_TEMP}/viastitching-package" -type f -printf '%s\n' | awk '{ total += $1 } END { print total }')"
+          download_sha256="$(sha256sum "${archive}" | cut -d ' ' -f 1)"
+          download_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/${archive}"
+
+          jq \
+            --arg url "${download_url}" \
+            --arg sha256 "${download_sha256}" \
+            --argjson download_size "${download_size}" \
+            --argjson install_size "${install_size}" \
+            '.versions[0] += {
+              download_url: $url,
+              download_sha256: $sha256,
+              download_size: $download_size,
+              install_size: $install_size
+            }' \
+            metadata.json > repository-metadata.json
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: viastitching-${{ steps.version.outputs.version }}-pcm
+          path: |
+            ${{ steps.version.outputs.archive }}
+            repository-metadata.json
+          if-no-files-found: error
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARCHIVE: ${{ steps.version.outputs.archive }}
+        shell: bash
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            "${ARCHIVE}#KiCad Plugin and Content Manager package" \
+            "repository-metadata.json#Metadata for the official KiCad addon repository" \
+            --verify-tag \
+            --title "ViaStitching ${{ steps.version.outputs.version }}" \
+            --generate-notes
