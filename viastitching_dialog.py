@@ -537,6 +537,9 @@ class ViaStitchingDialog(viastitching_gui):
                     via.SetPosition(p)
                     via.SetLayerSet(layer_set)
                     via.SetNetCode(netcode)
+                    if hasattr(via, "SetIsFree"):
+                        # Free vias keep the selected net instead of auto-updating from zones.
+                        via.SetIsFree(True)
                     # Set up via with clearance added to its size-> bounding box check will be OK in worst case, may be too conservative, but additional checks are possible if needed
                     # TODO: possibly take the clearance from the PCB settings instead of the dialog
                     # Clearance is all around -> *2
