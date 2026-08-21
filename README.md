@@ -1,38 +1,52 @@
 # ViaStitching
 
-Via Stitching action-plugin for use with KiCAD 6.0+.
+Via stitching action plugin for KiCad 6.0 and newer.
 
 Fill a selected copper area with a pattern of vias.
 
 ## When to use this tool
 
-Whenever you need to fill a copper area with vias to improve thermal or current conduction this tool is the answer (yet not the best one probably). The plugin is based on pre-existing areas so you have to define and select one before invoking the plugin.
+ViaStitching fills a selected copper zone with a configurable grid of vias. It can be used for ground stitching, shielding, thermal conduction, and current sharing between copper layers.
+
+The plugin works from an existing filled copper zone. Create and fill the zone, select it in PCB Editor, and then start ViaStitching.
 
 ## Install
 
-As any other KiCAD plugin - ViaStitching must be installed into one of the allowed path, my personal advice is to install it as a user plugin.
-To install it as user plugin on Windows systems (KiCAD 7.0) you should put plugins files into:
+Install ViaStitching as a user action plugin in the scripting directory for your KiCad version. On Windows, the usual location is:
 
-C:\Users\<user_folder>\Documents\KiCad\7.0\scripting\plugins\viastitching
+```text
+C:\Users\<user>\Documents\KiCad\<version>\scripting\plugins\viastitching
+```
+
+Copy the complete repository contents into that directory and restart KiCad. The plugin should appear under **Tools → External Plugins → ViaStitching**.
 
 ## How it works
 
-The workflow is pretty simple: select the area you want to fill, click on ```Tools->External Plugins->ViaStitching``` or click on ![AddNet icon](viastitching.png?raw=true) toolbar icon: a dilaog like the one below should appear:
+Select a filled copper zone and start **Tools → External Plugins → ViaStitching**, or use the ![ViaStitching icon](viastitching.png?raw=true) toolbar button. The following dialog opens:
 
 ![ViaStitching dialog](pictures/viastitching_dialog.png?raw=true "ViaStitching dialog")
 
-The vias you're going to create needs to be assigned a net usually this's the net of the target area for this reason the plugin pre-select this net for you; of course you're free to select another net if you like.
-The plugin dialog let you also specify the parameters for the via creation (via size and drill size), such values are taken from board configuration, you can change them but beware to use values that will not conflict with DRC rules; you can customize also: vertical and horizontal spacing between vias and edge clearance (insert 0 will disable check).
-When you're satisfied with your settings you have just to press __Ok__ and the fillup will begin (I'm assuming __Fill__ action is checked).
+The zone net is selected automatically, but another net can be chosen when needed. The dialog provides:
+
+- via diameter and drill diameter, initialized from the board settings;
+- vertical and horizontal spacing;
+- vertical and horizontal grid offsets;
+- clearance from the zone boundary and board edges (`0` disables the additional clearance check);
+- optional randomized placement;
+- **Only place vias that connect filled copper of the selected net on multiple layers**.
+
+The filled-copper option is enabled by default. When enabled, a via is created only when its complete annular area is over filled copper of the selected net on every relevant layer. When disabled, ViaStitching uses the selected zone's filled area, matching the earlier placement behavior. This setting is saved independently for each named zone.
+
+Generated vias are marked as free vias when supported by the KiCad API. This prevents KiCad's automatic via-net update from changing their assigned net when several filled zones overlap.
+
+Press **Ok** to generate the vias. Always run KiCad's Design Rules Checker after stitching.
 If everything goes fine you'll get something like this:
 
 ![viastitching result](pictures/viastitching_result.png?raw=true "ViaStitching result")
 
-After stitching is always a good practice to perform a DRC.
+ViaStitching checks pads, tracks, vias, footprint zones, board edges, and items belonging to other nets before placing each via. Complex boards may still expose cases not covered by the plugin, so DRC verification remains essential.
 
-As you can see some implanted vias may still overlap with some other PCB elements (tracks, ~~zone, pads, vias~~ etc) at this development stage the removal of conflicting vias is up to the user with future releases the implant process will prevent vias to overlap with other elements.
-
-The default action of the dialog is the __Fill__ action (as you can notice from the radio-button on the bottom) but this plugin is not limited to this function only. __Clear__ action works the in the opposite way: it removes from selected area any vias matching settings (i.e. same net, same size, same drill specified in dialog fields). Beware: __Clear__ will not distinguish vias implanted by __Fill__ from user ones until you check the specific checkbox, and will remove all of them if they match the values entered. If you check __clear only plugin placed vias__ widget the plugin will inspect vias grouped on a specific group and remove only those matching: this can be used as an __Undo__ feature.
+Use **Clear** to remove matching vias from the selected zone. With **Clear only plugin placed vias** enabled, only vias belonging to that zone's ViaStitching group are removed. Disable it to remove any via matching the selected net, size, and drill values inside the zone.
 
 ## TODO
 
@@ -57,18 +71,9 @@ Some features still to code:
 
 ## Coding notes
 
-If you are willing to make any modification to the GUI (you're welcome) trough __wxFormBuilder__ (```viastitching.fbp``` file) remember to modify this line (around line 25 ```viastitching_gui.py```):
-```
-self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
-```
-In this way:
-```
-if sys.version_info[0] == 2:
- self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
-else:
- self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
-```
-This modification allows the code to work with __Python 2__ (that's the standard KiCAD/Python distribution AFAIK) as long as __Python 3__, please note that you need to ```import sys```. Special thanks to *NilujePerchut* for this hint.
+The dialog is maintained in `viastitching.fbp` using wxFormBuilder 4.2.1. Do not edit `viastitching_gui.py` independently: update the `.fbp` project and regenerate the Python file so both representations remain synchronized.
+
+After regenerating the GUI, verify that all controls referenced by `viastitching_dialog.py` are still present. In particular, preserve the V/H offset controls and their 120-pixel minimum field width.
 
 ## kicad-action-scripts - ViaStitching plugin similarity
 
