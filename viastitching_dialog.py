@@ -529,14 +529,30 @@ class ViaStitchingDialog(viastitching_gui):
         netcode = self.board.GetNetcodeFromNetname(netname)
         # commit = pcbnew.COMMIT()
         viacount = 0
-        x = left - (left % step_x) + offset_x
+        
+        # Bug fix 1: Shrink effective bounding box by via radius on all sides
+        via_r = viasize // 2
+        eff_left = left + via_r
+        eff_right = right - via_r
+        eff_top = top + via_r
+        eff_bottom = bottom - via_r
+        
+        # Bug fix 2: Correct grid start point calculation
+        # Find first grid point that is >= eff_left
+        faza_x = (eff_left + offset_x) % step_x
+        x_start = eff_left if faza_x == 0 else eff_left + (step_x - faza_x)
+        
+        # Find first grid point that is >= eff_top
+        faza_y = (eff_top + offset_y) % step_y
+        y_start = eff_top if faza_y == 0 else eff_top + (step_y - faza_y)
 
         # Cycle trough area bounding box checking and implanting vias
         layer_set = self.area.GetLayerSet()
         layers = list(layer_set.Seq())
-        while x <= right:
-            y = top - (top % step_y) + offset_y
-            while y <= bottom:
+        x = x_start
+        while x <= eff_right:
+            y = y_start
+            while y <= eff_bottom:
                 if self.randomize:
                     xp = x + random.uniform(-1, 1) * step_x / 5
                     yp = y + random.uniform(-1, 1) * step_y / 5
