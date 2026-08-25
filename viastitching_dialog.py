@@ -24,7 +24,7 @@ except Exception:
 import json
 
 _ = gettext.gettext
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __plugin_name__ = "ViaStitching"
 # __timecode__ = 1972
 __viagroupname_base__ = "VIA_STITCHING_GROUP"
