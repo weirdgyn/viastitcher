@@ -112,6 +112,7 @@ Special thanks to everyone that contributed to this project:
 - [Giulio Borsoi](https://github.com/giulio-borsoi)
 - [danwood76](https://github.com/danwood76)
 - [NilujePerchut](https://github.com/NilujePerchut)
+- [canislupus11](https://github.com/canislupus11) — staggered/brick-pattern via placement ([#40](https://github.com/weirdgyn/viastitching/issues/40))
 
 Last but not least, I would like to thank everyone who shared their knowledge of Python and KiCAD with me: Thanks!
 #
