@@ -638,6 +638,9 @@ class ViaStitchingDialog(viastitching_gui):
                 return
             self.area.SetZoneName(zone_name)
 
+        # Keep the group name synchronized with the final zone name
+        self.viagroupname = __viagroupname_base__ + zone_name
+
         config = {
             "HSpacing": self.m_txtHSpacing.GetValue(),
             "VSpacing": self.m_txtVSpacing.GetValue(),
