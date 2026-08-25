@@ -44,6 +44,14 @@ class viastitching_gui ( wx.Dialog ):
 		self.m_chkOnlyFilledCopper.SetValue(True)
 		bMainSizer.Add( self.m_chkOnlyFilledCopper, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5 )
 
+		bSizer9 = wx.BoxSizer( wx.VERTICAL )
+
+		self.m_chkStagger = wx.CheckBox( self, wx.ID_ANY, _(u"Create staggered pattern"), wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer9.Add( self.m_chkStagger, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
+
+
+		bMainSizer.Add( bSizer9, 1, wx.EXPAND, 5 )
+
 		bHSizer2 = wx.BoxSizer( wx.HORIZONTAL )
 
 		self.m_lblVia = wx.StaticText( self, wx.ID_ANY, _(u"Size / drill"), wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -143,9 +151,6 @@ class viastitching_gui ( wx.Dialog ):
 		self.m_chkRandomize = wx.CheckBox( self, wx.ID_ANY, _(u"Randomize"), wx.DefaultPosition, wx.DefaultSize, 0 )
 		bHSizer4.Add( self.m_chkRandomize, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
 
-		self.m_chkStagger = wx.CheckBox( self, wx.ID_ANY, _(u"Stagger rows (offset every other row by half H-spacing)"), wx.DefaultPosition, wx.DefaultSize, 0 )
-		bHSizer4.Add( self.m_chkStagger, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
-
 
 		bMainSizer.Add( bHSizer4, 1, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
@@ -174,4 +179,5 @@ class viastitching_gui ( wx.Dialog ):
 
 	def __del__( self ):
 		pass
+
 
