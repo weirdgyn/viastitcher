@@ -130,6 +130,7 @@ class ViaStitchingDialog(viastitching_gui):
         )
         self.m_txtClearance.SetValue(defaults.get("Clearance", "0"))
         self.m_chkRandomize.SetValue(defaults.get("Randomize", False))
+        self.m_chkStagger.SetValue(defaults.get("Stagger", False))
         self.m_chkOnlyFilledCopper.SetValue(
             defaults.get("OnlyFilledCopper", True)
         )
@@ -519,6 +520,7 @@ class ViaStitchingDialog(viastitching_gui):
         offset_y = self.FromUserUnit(float(self.m_txtVOffset.GetValue()))
         clearance = self.FromUserUnit(float(self.m_txtClearance.GetValue()))
         self.randomize = self.m_chkRandomize.GetValue()
+        stagger = self.m_chkStagger.GetValue()
         self.clearance = clearance
         bbox = self.area.GetBoundingBox()
         top = bbox.GetTop()
@@ -546,13 +548,21 @@ class ViaStitchingDialog(viastitching_gui):
         faza_y = (eff_top + offset_y) % step_y
         y_start = eff_top if faza_y == 0 else eff_top + (step_y - faza_y)
 
-        # Cycle trough area bounding box checking and implanting vias
+        # Cycle through area bounding box checking and implanting vias
+        # Refactored to row-major for stagger support
         layer_set = self.area.GetLayerSet()
         layers = list(layer_set.Seq())
-        x = x_start
-        while x <= eff_right:
-            y = y_start
-            while y <= eff_bottom:
+        y = y_start
+        row_index = 0
+        while y <= eff_bottom:
+            # Calculate X offset for this row if staggering is enabled
+            row_x_offset = 0
+            if stagger and (row_index % 2 == 1):
+                # Offset every other row by half the horizontal spacing
+                row_x_offset = step_x // 2
+            
+            x = x_start + row_x_offset
+            while x <= eff_right:
                 if self.randomize:
                     xp = x + random.uniform(-1, 1) * step_x / 5
                     yp = y + random.uniform(-1, 1) * step_y / 5
@@ -568,12 +578,12 @@ class ViaStitchingDialog(viastitching_gui):
 
                 if self.m_chkOnlyFilledCopper.GetValue():
                     if not self.HasFilledCopperAt(p, layers, netcode, viasize / 2):
-                        y += step_y
+                        x += step_x
                         continue
                 elif not any(
                     self.area.HitTestFilledArea(layer, p, 0) for layer in layers
                 ):
-                    y += step_y
+                    x += step_x
                     continue
 
                 via = pcbnew.PCB_VIA(self.board)
@@ -600,8 +610,9 @@ class ViaStitchingDialog(viastitching_gui):
                         # commit.Add(via)
                         self.pcb_group.AddItem(via)
                         viacount += 1
-                y += step_y
-            x += step_x
+                x += step_x
+            y += step_y
+            row_index += 1
 
         if viacount > 0:
             wx.MessageBox(_("Implanted: %d vias!") % viacount)
@@ -634,6 +645,7 @@ class ViaStitchingDialog(viastitching_gui):
             "VOffset": self.m_txtVOffset.GetValue(),
             "Clearance": self.m_txtClearance.GetValue(),
             "Randomize": self.m_chkRandomize.GetValue(),
+            "Stagger": self.m_chkStagger.GetValue(),
             "OnlyFilledCopper": self.m_chkOnlyFilledCopper.GetValue(),
         }
 
