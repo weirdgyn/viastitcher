@@ -317,7 +317,13 @@ class ViaStitchingDialog(viastitching_gui):
                 p2 = corner.getWxPoint()
             else:
                 p2 = corner  # VECTOR2I can be used directly
-            the_distance = norm(p2 - p1)
+            # Avoid subtracting SWIG geometry objects directly: on KiCad 7
+            # GetCornerPosition().getWxPoint() may return wxPoint while
+            # via.GetPosition() returns VECTOR2I.
+            the_distance = math.hypot(
+                p2.x - p1.x,
+                p2.y - p1.y,
+            )
 
             if the_distance < clearance:
                 return False
