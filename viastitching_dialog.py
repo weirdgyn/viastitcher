@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# ViaStitching for pcbnew
+# ViaStitcher for pcbnew
 # This is the plugin WX dialog
 # (c) Michele Santucci 2019
 #
@@ -25,8 +25,13 @@ import json
 
 _ = gettext.gettext
 __version__ = "0.3.0"
-__plugin_name__ = "ViaStitching"
+__plugin_name__ = "ViaStitcher"
+__plugin_config_key__ = "ViaStitcher"
+# Continue accepting the marker written before the public plugin rename.
+__legacy_plugin_config_key__ = "ViaStitching"
 # __timecode__ = 1972
+# This persistent prefix is intentionally unchanged so existing via groups are
+# still found and cleared after upgrading to ViaStitcher.
 __viagroupname_base__ = "VIA_STITCHING_GROUP"
 __plugin_config_layer_name__ = "plugins.config"
 
@@ -72,7 +77,10 @@ class ViaStitchingDialog(viastitching_gui):
             if d.GetLayerName() == __plugin_config_layer_name__:
                 try:
                     new_config = json.loads(d.GetText())
-                    if __plugin_name__ in new_config.keys():
+                    if (
+                        __plugin_config_key__ in new_config.keys()
+                        or __legacy_plugin_config_key__ in new_config.keys()
+                    ):
                         self.config_textbox = d
                         self.config = new_config
                 except (JSONDecodeError, AttributeError):
@@ -659,7 +667,7 @@ class ViaStitchingDialog(viastitching_gui):
         }
 
         if self.config_textbox is None:
-            self.config = {__plugin_name__: __version__}
+            self.config = {__plugin_config_key__: __version__}
             title_block = pcbnew.PCB_TEXT(self.board)
             title_block.SetLayer(self.config_layer)
 

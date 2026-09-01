@@ -41,14 +41,14 @@ jobs:
           fi
 
           echo "version=${release_version}" >> "${GITHUB_OUTPUT}"
-          echo "archive=viastitching-${release_version}-pcm.zip" >> "${GITHUB_OUTPUT}"
+          echo "archive=viastitcher-${release_version}-pcm.zip" >> "${GITHUB_OUTPUT}"
 
       - name: Assemble PCM package
         shell: bash
         run: |
           set -euo pipefail
 
-          package_root="${RUNNER_TEMP}/viastitching-package"
+          package_root="${RUNNER_TEMP}/viastitcher-package"
           mkdir -p "${package_root}/plugins" "${package_root}/resources"
 
           cp metadata.json "${package_root}/metadata.json"
@@ -74,7 +74,7 @@ jobs:
 
           archive="${{ steps.version.outputs.archive }}"
           download_size="$(stat --format=%s "${archive}")"
-          install_size="$(find "${RUNNER_TEMP}/viastitching-package" -type f -printf '%s\n' | awk '{ total += $1 } END { print total }')"
+          install_size="$(find "${RUNNER_TEMP}/viastitcher-package" -type f -printf '%s\n' | awk '{ total += $1 } END { print total }')"
           download_sha256="$(sha256sum "${archive}" | cut -d ' ' -f 1)"
           download_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/${archive}"
 
@@ -94,7 +94,7 @@ jobs:
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: viastitching-${{ steps.version.outputs.version }}-pcm
+          name: viastitcher-${{ steps.version.outputs.version }}-pcm
           path: |
             ${{ steps.version.outputs.archive }}
             repository-metadata.json
@@ -110,5 +110,5 @@ jobs:
             "${ARCHIVE}#KiCad Plugin and Content Manager package" \
             "repository-metadata.json#Metadata for the official KiCad addon repository" \
             --verify-tag \
-            --title "ViaStitching ${{ steps.version.outputs.version }}" \
+            --title "ViaStitcher ${{ steps.version.outputs.version }}" \
             --generate-notes
