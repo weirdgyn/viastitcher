@@ -52,14 +52,14 @@ jobs:
           mkdir -p "${package_root}/plugins" "${package_root}/resources"
 
           cp metadata.json "${package_root}/metadata.json"
-          cp viastitching64x64.png "${package_root}/resources/icon.png"
+          cp viastitcher64x64.png "${package_root}/resources/icon.png"
           cp \
             __init__.py \
             defaults.json \
-            viastitching.png \
-            viastitching_dialog.py \
-            viastitching_gui.py \
-            viastitching_plugin.py \
+            viastitcher.png \
+            viastitcher_dialog.py \
+            viastitcher_gui.py \
+            viastitcher_plugin.py \
             "${package_root}/plugins/"
 
           (

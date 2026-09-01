@@ -1,2 +1,2 @@
-from .viastitching_plugin import ViaStitchingPlugin
-ViaStitchingPlugin().register()
+from .viastitcher_plugin import ViaStitcherPlugin
+ViaStitcherPlugin().register()

@@ -14,10 +14,10 @@ import gettext
 _ = gettext.gettext
 
 ###########################################################################
-## Class viastitching_gui
+## Class viastitcher_gui
 ###########################################################################
 
-class viastitching_gui ( wx.Dialog ):
+class viastitcher_gui ( wx.Dialog ):
 
 	def __init__( self, parent ):
 		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = _(u"Via Stitching"), pos = wx.DefaultPosition, size = wx.Size( -1,-1 ), style = wx.DEFAULT_DIALOG_STYLE )
