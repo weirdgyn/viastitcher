@@ -24,7 +24,7 @@ except Exception:
 import json
 
 _ = gettext.gettext
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 __plugin_name__ = "ViaStitcher"
 __plugin_config_key__ = "ViaStitcher"
 # Continue accepting the marker written before the public plugin rename.
