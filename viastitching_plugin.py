@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# ViaStitching for pcbnew
+# ViaStitcher for pcbnew
 # This is the action plugin interface
 # (c) Michele Santucci 2019
 #
@@ -17,7 +17,7 @@ _ = gettext.gettext
 
 class ViaStitchingPlugin(ActionPlugin):
     def defaults(self):
-        self.name = _(u"ViaStitching")
+        self.name = _(u"ViaStitcher")
         self.category = _(u"Modify PCB")
         self.description = _(u"Create a vias stitching pattern")
         self.show_toolbar_button = True
