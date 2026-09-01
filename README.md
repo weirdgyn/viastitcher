@@ -28,13 +28,13 @@ Release packages for KiCad's Plugin and Content Manager are built automatically 
 Release-x.x.x.x
 ```
 
-For example, `Release-0.2.0.0` packages PCM version `0.2.0` with version epoch `0`. Before pushing the tag, update `metadata.json` so its version and epoch match. The workflow creates a GitHub release containing the installable PCM ZIP and a `repository-metadata.json` file with the download URL, SHA-256 checksum, download size, and install size required for submission to the official KiCad addon repository. The package uses `viastitching64x64.png` as its PCM icon while retaining `viastitching.png` as the PCB Editor toolbar icon.
+For example, `Release-0.2.0.0` packages PCM version `0.2.0` with version epoch `0`. Before pushing the tag, update `metadata.json` so its version and epoch match. The workflow creates a GitHub release containing the installable PCM ZIP and a `repository-metadata.json` file with the download URL, SHA-256 checksum, download size, and install size required for submission to the official KiCad addon repository. The package uses `viastitcher64x64.png` as its PCM icon while retaining `viastitcher.png` as the PCB Editor toolbar icon.
 
 ## How it works
 
-Select a filled copper zone and start **Tools → External Plugins → ViaStitcher**, or use the ![ViaStitcher icon](viastitching.png?raw=true) toolbar button. The following dialog opens:
+Select a filled copper zone and start **Tools → External Plugins → ViaStitcher**, or use the ![ViaStitcher icon](viastitcher.png?raw=true) toolbar button. The following dialog opens:
 
-![ViaStitcher dialog](pictures/viastitching_dialog.png?raw=true "ViaStitcher dialog")
+![ViaStitcher dialog](pictures/viastitcher_dialog.png?raw=true "ViaStitcher dialog")
 
 The zone net is selected automatically, but another net can be chosen when needed. The dialog provides:
 
@@ -52,7 +52,7 @@ Generated vias are marked as free vias when supported by the KiCad API. This pre
 Press **Ok** to generate the vias. Always run KiCad's Design Rules Checker after stitching.
 If everything goes fine you'll get something like this:
 
-![ViaStitcher result](pictures/viastitching_result.png?raw=true "ViaStitcher result")
+![ViaStitcher result](pictures/viastitcher_result.png?raw=true "ViaStitcher result")
 
 ViaStitcher checks pads, tracks, vias, footprint zones, board edges, and items belonging to other nets before placing each via. Complex boards may still expose cases not covered by the plugin, so DRC verification remains essential.
 
@@ -81,9 +81,9 @@ Some features still to code:
 
 ## Coding notes
 
-The dialog is maintained in `viastitching.fbp` using wxFormBuilder 4.2.1. Do not edit `viastitching_gui.py` independently: update the `.fbp` project and regenerate the Python file so both representations remain synchronized.
+The dialog is maintained in `viastitcher.fbp` using wxFormBuilder 4.2.1. Do not edit `viastitcher_gui.py` independently: update the `.fbp` project and regenerate the Python file so both representations remain synchronized.
 
-After regenerating the GUI, verify that all controls referenced by `viastitching_dialog.py` are still present. In particular, preserve the V/H offset controls and their 120-pixel minimum field width.
+After regenerating the GUI, verify that all controls referenced by `viastitcher_dialog.py` are still present. In particular, preserve the V/H offset controls and their 120-pixel minimum field width.
 
 ## Relationship to similarly named plugins
 

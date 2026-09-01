@@ -12,7 +12,7 @@ import pcbnew
 import gettext
 import math
 
-from .viastitching_gui import viastitching_gui
+from .viastitcher_gui import viastitcher_gui
 
 numpy_available = False
 try:
@@ -44,13 +44,13 @@ GUI_defaults = {
 }
 
 
-class ViaStitchingDialog(viastitching_gui):
+class ViaStitcherDialog(viastitcher_gui):
     """Class that gathers all the GUI controls."""
 
     def __init__(self, board):
         """Initialize the brand new instance."""
 
-        super(ViaStitchingDialog, self).__init__(None)
+        super(ViaStitcherDialog, self).__init__(None)
         self.initialized = False
         self.viagroupname = None
         self.SetTitle(_("{0} v{1}").format(__plugin_name__, __version__))
@@ -742,10 +742,10 @@ class ViaStitchingDialog(viastitching_gui):
             self.board.SetLayerName(self.config_layer, __plugin_config_layer_name__)
 
 
-def InitViaStitchingDialog(board):
+def InitViaStitcherDialog(board):
     """Initalize dialog."""
 
-    dlg = ViaStitchingDialog(board)
+    dlg = ViaStitcherDialog(board)
     if dlg.initialized:
         dlg.Show(True)
     return dlg
