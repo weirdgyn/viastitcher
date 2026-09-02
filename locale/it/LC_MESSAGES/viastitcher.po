@@ -114,7 +114,7 @@ msgid "0"
 msgstr "0"
 
 #: .\viastitcher_gui.py:161
-msgid "Only place vias that connect filled copper of the selected net on multiple layers"
+msgid "Only place vias connecting selected net copper on multiple layers"
 msgstr "Posiziona i via solo dove il rame della rete selezionata è presente su più strati"
 
 #: .\viastitcher_gui.py:165
