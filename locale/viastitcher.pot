@@ -14,7 +14,7 @@ msgstr ""
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: .\viastitcher_dialog.py:56
@@ -52,67 +52,79 @@ msgstr ""
 msgid "No vias implanted!"
 msgstr ""
 
+#: .\viastitcher_plugin.py:18
+msgid "ViaStitcher"
+msgstr ""
+
+#: .\viastitcher_plugin.py:19
+msgid "Modify PCB"
+msgstr ""
+
+#: .\viastitcher_plugin.py:20
+msgid "Create a vias stitching pattern"
+msgstr ""
+
 #: .\viastitcher_gui.py:23
-msgid "DLG_TITLE"
+msgid "Via Stitcher"
 msgstr ""
 
 #: .\viastitcher_gui.py:34
-msgid "LBL_STYLE"
+msgid "Style"
 msgstr ""
 
 #: .\viastitcher_gui.py:39
-msgid "CB_CREATE_STAGG_PATTERN"
+msgid "Create staggered pattern"
 msgstr ""
 
 #: .\viastitcher_gui.py:51
-msgid "CB_RANDOMIZE"
+msgid "Randomize"
 msgstr ""
 
 #: .\viastitcher_gui.py:60
-msgid "LB_NETNAME"
+msgid "Net name"
 msgstr ""
 
 #: .\viastitcher_gui.py:75
-msgid "LB_VIAPARAM"
+msgid "Size / drill"
 msgstr ""
 
 #: .\viastitcher_gui.py:90 .\viastitcher_gui.py:110 .\viastitcher_gui.py:130
 #: .\viastitcher_gui.py:148
-msgid "LB_UNIT_mm"
+msgid "mm"
 msgstr ""
 
 #: .\viastitcher_gui.py:95
-msgid "LB_SPACING"
+msgid "Spacing (V/H)"
 msgstr ""
 
 #: .\viastitcher_gui.py:115
-msgid "LB_OFFSET"
+msgid "Offset (V/H)"
 msgstr ""
 
 #: .\viastitcher_gui.py:135
-msgid "LB_CLEARANCE"
+msgid "Clearance"
 msgstr ""
 
 #: .\viastitcher_gui.py:140
-msgid "DEFAULT_CLEARANCE"
+msgid "0"
 msgstr ""
 
 #: .\viastitcher_gui.py:161
-msgid "CB_ONLY_FILLED_COPPER"
+msgid "Only place vias that connect filled copper of the selected net on multiple layers"
 msgstr ""
 
 #: .\viastitcher_gui.py:165
-msgid "CB_CLEAR_ONLY_PLUGIN"
+msgid "Clear only plugin placed vias"
 msgstr ""
 
 #: .\viastitcher_gui.py:177
-msgid "BT_OK"
+msgid "&Ok"
 msgstr ""
 
 #: .\viastitcher_gui.py:182
-msgid "BT_CANCEL"
+msgid "&Cancel"
 msgstr ""
 
 #: .\viastitcher_gui.py:185
-msgid "BT_CLEAR"
+msgid "C&lear"
 msgstr ""

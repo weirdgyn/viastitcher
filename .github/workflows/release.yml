@@ -56,11 +56,13 @@ jobs:
           cp \
             __init__.py \
             defaults.json \
+            localization.py \
             viastitcher.png \
             viastitcher_dialog.py \
             viastitcher_gui.py \
             viastitcher_plugin.py \
             "${package_root}/plugins/"
+          cp -R locale "${package_root}/plugins/locale"
 
           (
             cd "${package_root}"

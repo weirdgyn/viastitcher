@@ -8,12 +8,10 @@
 import wx
 import os
 import pcbnew
-import gettext
 
 from pcbnew import ActionPlugin, GetBoard
 from .viastitcher_dialog import InitViaStitcherDialog
-
-_ = gettext.gettext
+from .localization import _
 
 class ViaStitcherPlugin(ActionPlugin):
     def defaults(self):

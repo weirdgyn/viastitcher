@@ -9,10 +9,10 @@ from json import JSONDecodeError
 
 import wx
 import pcbnew
-import gettext
 import math
 
 from .viastitcher_gui import viastitcher_gui
+from .localization import _
 
 numpy_available = False
 try:
@@ -23,7 +23,6 @@ except Exception:
     from math import sqrt, pow
 import json
 
-_ = gettext.gettext
 __version__ = "0.3.1"
 __plugin_name__ = "ViaStitcher"
 __plugin_config_key__ = "ViaStitcher"

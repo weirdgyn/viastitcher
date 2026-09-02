@@ -30,6 +30,18 @@ Release-x.x.x.x
 
 For example, `Release-0.2.0.0` packages PCM version `0.2.0` with version epoch `0`. Before pushing the tag, update `metadata.json` so its version and epoch match. The workflow creates a GitHub release containing the installable PCM ZIP and a `repository-metadata.json` file with the download URL, SHA-256 checksum, download size, and install size required for submission to the official KiCad addon repository. The package uses `viastitcher64x64.png` as its PCM icon while retaining `viastitcher.png` as the PCB Editor toolbar icon.
 
+## Localization
+
+ViaStitcher follows KiCad's active interface language and currently includes English and Italian catalogs. English source strings are the fallback when no matching catalog is available. Set `VIASTITCHER_LANGUAGE` (for example, to `it_IT`) to override language detection while testing.
+
+After editing a `.po` file, compile the runtime `.mo` catalogs before committing:
+
+```text
+python locale_setup.py
+```
+
+`viastitcher.fbp` is the source of truth for the dialog layout. It has wxFormBuilder internationalization enabled; therefore regenerated `viastitcher_gui.py` files deliberately use `gettext.gettext`. Do not edit the generated file to change its translation import: `localization.py` installs the selected ViaStitcher catalog as gettext's default domain when the plugin loads.
+
 ## How it works
 
 Select a filled copper zone and start **Tools → External Plugins → ViaStitcher**, or use the ![ViaStitcher icon](viastitcher.png?raw=true) toolbar button. The following dialog opens:
@@ -74,7 +86,7 @@ Some features still to code:
 - [ ] Different fillup patterns/modes (bounding box, centered spiral).
 - [x] Avoid placing vias near area edges (define clearance).
 - [ ] History management (board commit).
-- [ ] Localization.
+- [x] Localization (English and Italian).
 - [x] Support for multiple zones
 - [x] Storage of stitching configuration for each individual zone as JSON string in a user layer.
 - [ ] Any request?
