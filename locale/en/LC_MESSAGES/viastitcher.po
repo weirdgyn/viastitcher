@@ -1,0 +1,134 @@
+# English translations for PACKAGE package.
+# Copyright (C) 2026 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-02 14:18+0200\n"
+"PO-Revision-Date: 2026-09-02 15:04+0200\n"
+"Last-Translator: <EMAIL@ADDRESS>\n"
+"Language-Team: English\n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CP1252\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: .\viastitcher_gui.py:23
+msgid "Via Stitcher"
+msgstr "Via Stitcher"
+
+#: .\viastitcher_gui.py:34
+msgid "Style"
+msgstr "Style"
+
+#: .\viastitcher_gui.py:39
+msgid "Create staggered pattern"
+msgstr "Create staggered pattern"
+
+#: .\viastitcher_gui.py:51
+msgid "Randomize"
+msgstr "Randomize"
+
+#: .\viastitcher_gui.py:60
+msgid "Net name"
+msgstr "Net name"
+
+#: .\viastitcher_gui.py:75
+msgid "Size / drill"
+msgstr "Size / drill"
+
+#: .\viastitcher_gui.py:90 .\viastitcher_gui.py:110 .\viastitcher_gui.py:130
+#: .\viastitcher_gui.py:148
+msgid "mm"
+msgstr "mm"
+
+#: .\viastitcher_gui.py:95
+msgid "Spacing (V/H)"
+msgstr "Spacing (V/H)"
+
+#: .\viastitcher_gui.py:115
+msgid "Offset (V/H)"
+msgstr "Offset (V/H)"
+
+#: .\viastitcher_gui.py:135
+msgid "Clearance"
+msgstr "Clearance"
+
+#: .\viastitcher_gui.py:140
+msgid "0"
+msgstr "0"
+
+#: .\viastitcher_gui.py:161
+msgid ""
+"Only place vias that connect filled copper of the selected net on multiple "
+"layers"
+msgstr ""
+"Only place vias that connect filled copper of the selected net on multiple "
+"layers"
+
+#: .\viastitcher_gui.py:165
+msgid "Clear only plugin placed vias"
+msgstr "Clear only plugin placed vias"
+
+#: .\viastitcher_gui.py:177
+msgid "&Ok"
+msgstr "&Ok"
+
+#: .\viastitcher_gui.py:182
+msgid "&Cancel"
+msgstr "&Cancel"
+
+#: .\viastitcher_gui.py:185
+msgid "C&lear"
+msgstr "C&lear"
+
+#: .\viastitcher_dialog.py:56
+#, python-brace-format
+msgid "{0} v{1}"
+msgstr "{0} v{1}"
+
+#: .\viastitcher_dialog.py:94
+msgid "Not a valid frame"
+msgstr "Not a valid frame"
+
+#: .\viastitcher_dialog.py:100
+msgid "Unsupported unit selected"
+msgstr "Unsupported unit selected"
+
+#: .\viastitcher_dialog.py:106
+msgid "Please select a valid area"
+msgstr "Please select a valid area"
+
+#: .\viastitcher_dialog.py:164
+msgid "Please set a valid via diameter and drill size in Board Setup"
+msgstr "Please set a valid via diameter and drill size in Board Setup"
+
+#: .\viastitcher_dialog.py:301
+#, python-format
+msgid "Removed: %d vias!"
+msgstr "Removed: %d vias!"
+
+#: .\viastitcher_dialog.py:632
+#, python-format
+msgid "Implanted: %d vias!"
+msgstr "Implanted: %d vias!"
+
+#: .\viastitcher_dialog.py:636
+msgid "No vias implanted!"
+msgstr "No vias implanted!"
+
+#: .\viastitcher_plugin.py:20
+msgid "ViaStitcher"
+msgstr "ViaStitcher"
+
+#: .\viastitcher_plugin.py:21
+msgid "Modify PCB"
+msgstr "Modify PCB"
+
+#: .\viastitcher_plugin.py:22
+msgid "Create a vias stitching pattern"
+msgstr "Create a vias stitching pattern"
