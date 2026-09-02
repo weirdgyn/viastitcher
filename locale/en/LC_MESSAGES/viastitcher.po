@@ -73,8 +73,11 @@ msgid "Style"
 msgstr "Style"
 
 #: .\viastitcher_gui.py:39
-msgid "Create staggered pattern"
-msgstr "Create staggered pattern"
+msgid "Standard"
+msgstr "Standard"
+
+msgid "Stagger"
+msgstr "Stagger"
 
 #: .\viastitcher_gui.py:51
 msgid "Randomize"

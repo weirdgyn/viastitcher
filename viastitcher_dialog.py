@@ -42,6 +42,8 @@ GUI_defaults = {
     "offset": {5: "0", 1: "0"},
 }
 
+FILL_STYLES = ("Standard", "Stagger", "Randomize")
+
 
 class ViaStitcherDialog(viastitcher_gui):
     """Class that gathers all the GUI controls."""
@@ -136,8 +138,7 @@ class ViaStitcherDialog(viastitcher_gui):
             defaults.get("HOffset", GUI_defaults["offset"][units_mode])
         )
         self.m_txtClearance.SetValue(defaults.get("Clearance", "0"))
-        self.m_chkRandomize.SetValue(defaults.get("Randomize", False))
-        self.m_chkStagger.SetValue(defaults.get("Stagger", False))
+        self.m_cbFillStyle.SetSelection(self._get_fill_style_index(defaults))
         self.m_chkOnlyFilledCopper.SetValue(
             defaults.get("OnlyFilledCopper", True)
         )
@@ -169,6 +170,29 @@ class ViaStitcherDialog(viastitcher_gui):
         self.m_txtViaDrillSize.SetValue("%.6f" % self.ToUserUnit(via_drill))
         self.overlappings = None
         self.initialized = True
+
+    @staticmethod
+    def _get_fill_style_index(defaults):
+        """Read the new style setting or migrate legacy checkbox settings."""
+        fill_style = defaults.get("FillStyle")
+        if fill_style in FILL_STYLES:
+            return FILL_STYLES.index(fill_style)
+
+        # Old configurations could enable both checkboxes. Randomize takes
+        # precedence because the new selector intentionally makes styles
+        # mutually exclusive.
+        if defaults.get("Randomize", False):
+            return FILL_STYLES.index("Randomize")
+        if defaults.get("Stagger", False):
+            return FILL_STYLES.index("Stagger")
+        return FILL_STYLES.index("Standard")
+
+    def _get_fill_style(self):
+        selection = self.m_cbFillStyle.GetSelection()
+        if 0 <= selection < len(FILL_STYLES):
+            return FILL_STYLES[selection]
+        return "Standard"
+
 
     def GetOverlappingItems(self):
         """Collect overlapping items.
@@ -532,8 +556,9 @@ class ViaStitcherDialog(viastitcher_gui):
         offset_x = self.FromUserUnit(float(self.m_txtHOffset.GetValue()))
         offset_y = self.FromUserUnit(float(self.m_txtVOffset.GetValue()))
         clearance = self.FromUserUnit(float(self.m_txtClearance.GetValue()))
-        self.randomize = self.m_chkRandomize.GetValue()
-        stagger = self.m_chkStagger.GetValue()
+        fill_style = self._get_fill_style()
+        self.randomize = fill_style == "Randomize"
+        stagger = fill_style == "Stagger"
         self.clearance = clearance
         bbox = self.area.GetBoundingBox()
         top = bbox.GetTop()
@@ -660,8 +685,7 @@ class ViaStitcherDialog(viastitcher_gui):
             "HOffset": self.m_txtHOffset.GetValue(),
             "VOffset": self.m_txtVOffset.GetValue(),
             "Clearance": self.m_txtClearance.GetValue(),
-            "Randomize": self.m_chkRandomize.GetValue(),
-            "Stagger": self.m_chkStagger.GetValue(),
+            "FillStyle": self._get_fill_style(),
             "OnlyFilledCopper": self.m_chkOnlyFilledCopper.GetValue(),
         }
 

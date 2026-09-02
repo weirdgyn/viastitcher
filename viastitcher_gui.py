@@ -36,20 +36,9 @@ class viastitcher_gui ( wx.Dialog ):
 
 		fgSizer1.Add( self.m_lblStyle, 0, wx.ALL|wx.EXPAND, 5 )
 
-		self.m_chkStagger = wx.CheckBox( self, wx.ID_ANY, _(u"Create staggered pattern"), wx.DefaultPosition, wx.DefaultSize, 0 )
-		fgSizer1.Add( self.m_chkStagger, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL|wx.EXPAND, 5 )
-
-
-		fgSizer1.Add( ( 0, 0), 1, wx.EXPAND, 5 )
-
-
-		fgSizer1.Add( ( 0, 0), 1, wx.EXPAND, 5 )
-
-
-		fgSizer1.Add( ( 0, 0), 1, wx.EXPAND, 5 )
-
-		self.m_chkRandomize = wx.CheckBox( self, wx.ID_ANY, _(u"Randomize"), wx.DefaultPosition, wx.DefaultSize, 0 )
-		fgSizer1.Add( self.m_chkRandomize, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL|wx.EXPAND, 5 )
+		m_cbFillStyleChoices = [ _(u"Standard"), _(u"Stagger"), _(u"Randomize") ]
+		self.m_cbFillStyle = wx.ComboBox( self, wx.ID_ANY, _(u"Standard"), wx.DefaultPosition, wx.DefaultSize, m_cbFillStyleChoices, wx.CB_READONLY )
+		fgSizer1.Add( self.m_cbFillStyle, 0, wx.ALL|wx.EXPAND, 5 )
 
 
 		fgSizer1.Add( ( 0, 0), 1, wx.EXPAND, 5 )
