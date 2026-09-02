@@ -136,8 +136,53 @@ class ViaStitcherDialog(viastitcher_gui):
             defaults.get("HOffset", GUI_defaults["offset"][units_mode])
         )
         self.m_txtClearance.SetValue(defaults.get("Clearance", "0"))
-        self.m_chkRandomize.SetValue(defaults.get("Randomize", False))
-        self.m_chkStagger.SetValue(defaults.get("Stagger", False))
+
+        # Determine initial FillStyle (new) derived from config or legacy booleans
+        fill_style = None
+        if "FillStyle" in defaults:
+            fill_style = defaults.get("FillStyle")
+        else:
+            # derive FillStyle from legacy booleans
+            rand_def = defaults.get("Randomize", False)
+            stag_def = defaults.get("Stagger", False)
+            if stag_def:
+                fill_style = _("Stagger")
+            elif rand_def:
+                fill_style = _("Randomize")
+            else:
+                fill_style = _("Standard")
+
+        # If the GUI has the new combobox, select; otherwise fall back to legacy checkboxes
+        if hasattr(self, "m_cbFillStyle"):
+            try:
+                idx = self.m_cbFillStyle.FindString(fill_style)
+                if idx != wx.NOT_FOUND:
+                    self.m_cbFillStyle.Select(idx)
+                else:
+                    # ensure the combobox contains the string then select
+                    try:
+                        self.m_cbFillStyle.Append(fill_style)
+                        self.m_cbFillStyle.Select(self.m_cbFillStyle.FindString(fill_style))
+                    except Exception:
+                        self.m_cbFillStyle.SetValue(fill_style)
+            except Exception:
+                try:
+                    self.m_cbFillStyle.SetValue(fill_style)
+                except Exception:
+                    pass
+        else:
+            # keep legacy checkbox values for older GUI code
+            if hasattr(self, "m_chkRandomize"):
+                try:
+                    self.m_chkRandomize.SetValue(defaults.get("Randomize", False))
+                except Exception:
+                    pass
+            if hasattr(self, "m_chkStagger"):
+                try:
+                    self.m_chkStagger.SetValue(defaults.get("Stagger", False))
+                except Exception:
+                    pass
+
         self.m_chkOnlyFilledCopper.SetValue(
             defaults.get("OnlyFilledCopper", True)
         )
@@ -532,8 +577,38 @@ class ViaStitcherDialog(viastitcher_gui):
         offset_x = self.FromUserUnit(float(self.m_txtHOffset.GetValue()))
         offset_y = self.FromUserUnit(float(self.m_txtVOffset.GetValue()))
         clearance = self.FromUserUnit(float(self.m_txtClearance.GetValue()))
-        self.randomize = self.m_chkRandomize.GetValue()
-        stagger = self.m_chkStagger.GetValue()
+
+        # New: determine stagger/randomize from combobox selection if available
+        stagger = False
+        self.randomize = False
+        if hasattr(self, "m_cbFillStyle"):
+            try:
+                fill_style = self.m_cbFillStyle.GetStringSelection().strip()
+            except Exception:
+                fill_style = self.m_cbFillStyle.GetValue().strip()
+
+            # Map to the three allowed styles: Standard, Stagger, Randomize
+            fs_lower = fill_style.lower()
+            if "stagger" in fs_lower:
+                stagger = True
+            elif "random" in fs_lower:
+                self.randomize = True
+            else:
+                # Standard: neither stagger nor randomize
+                pass
+        else:
+            # fallback to legacy checkboxes if present
+            if hasattr(self, "m_chkRandomize"):
+                try:
+                    self.randomize = self.m_chkRandomize.GetValue()
+                except Exception:
+                    self.randomize = False
+            if hasattr(self, "m_chkStagger"):
+                try:
+                    stagger = self.m_chkStagger.GetValue()
+                except Exception:
+                    stagger = False
+
         self.clearance = clearance
         bbox = self.area.GetBoundingBox()
         top = bbox.GetTop()
@@ -654,14 +729,53 @@ class ViaStitcherDialog(viastitcher_gui):
         # Keep the group name synchronized with the final zone name
         self.viagroupname = __viagroupname_base__ + zone_name
 
+        # Determine fill style for saving into config (prefer combobox if available)
+        fill_style = None
+        rand_val = False
+        stag_val = False
+        if hasattr(self, "m_cbFillStyle"):
+            try:
+                fill_style = self.m_cbFillStyle.GetStringSelection().strip()
+            except Exception:
+                fill_style = self.m_cbFillStyle.GetValue().strip()
+            fs_lower = fill_style.lower()
+            if "stagger" in fs_lower:
+                stag_val = True
+            elif "random" in fs_lower:
+                rand_val = True
+            else:
+                # Standard
+                pass
+        else:
+            # fallback to legacy checkboxes
+            if hasattr(self, "m_chkRandomize"):
+                try:
+                    rand_val = self.m_chkRandomize.GetValue()
+                except Exception:
+                    rand_val = False
+            if hasattr(self, "m_chkStagger"):
+                try:
+                    stag_val = self.m_chkStagger.GetValue()
+                except Exception:
+                    stag_val = False
+
+            if stag_val:
+                fill_style = _("Stagger")
+            elif rand_val:
+                fill_style = _("Randomize")
+            else:
+                fill_style = _("Standard")
+
         config = {
             "HSpacing": self.m_txtHSpacing.GetValue(),
             "VSpacing": self.m_txtVSpacing.GetValue(),
             "HOffset": self.m_txtHOffset.GetValue(),
             "VOffset": self.m_txtVOffset.GetValue(),
             "Clearance": self.m_txtClearance.GetValue(),
-            "Randomize": self.m_chkRandomize.GetValue(),
-            "Stagger": self.m_chkStagger.GetValue(),
+            # store FillStyle centrally and keep legacy booleans for compatibility
+            "FillStyle": fill_style,
+            "Randomize": rand_val,
+            "Stagger": stag_val,
             "OnlyFilledCopper": self.m_chkOnlyFilledCopper.GetValue(),
         }
 
@@ -766,7 +880,7 @@ class aVector:
         return aVector([self.x * float(other), self.y * float(other)])
 
     def __add__(self, other):
-        return aVector([self.x + float(other.x), self.y + float(other.y)])
+        return aVector([self.x + float(other.x), self.y + float(other)])
 
     def __truediv__(self, other):
         return aVector([self.x / other, self.y / other])
