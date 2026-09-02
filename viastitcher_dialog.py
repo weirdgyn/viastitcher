@@ -23,7 +23,7 @@ except Exception:
     from math import sqrt, pow
 import json
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 __plugin_name__ = "ViaStitcher"
 __plugin_config_key__ = "ViaStitcher"
 # Continue accepting the marker written before the public plugin rename.
