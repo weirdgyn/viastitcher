@@ -204,6 +204,7 @@ Tool I got inspired by:
 
 Hope someone find my work useful or at least *inspiring* to create something else/better.
 Special thanks to everyone that contributed to this project:
+- [RealHaltewunsch] (https://github.com/RealHaltewunsch)
 - [Giulio Borsoi](https://github.com/giulio-borsoi)
 - [danwood76](https://github.com/danwood76)
 - [NilujePerchut](https://github.com/NilujePerchut)
