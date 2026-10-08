@@ -55,9 +55,9 @@ The zone net is selected automatically, but another net can be chosen when neede
 - vertical and horizontal grid offsets;
 - clearance from the zone boundary and board edges (`0` disables the additional clearance check);
 - optional randomized placement;
-- **Only place vias that connect filled copper of the selected net on multiple layers**.
+- **Require copper connection on all layers (off: at least two)**.
 
-The filled-copper option is enabled by default. When enabled, a via is created only when its complete annular area is over filled copper of the selected net on every relevant layer. When disabled, ViaStitcher uses the selected zone's filled area, matching the earlier placement behavior. This setting is saved independently for each named zone.
+The copper-connection checkbox is **off by default**: a via must have its full annular area over the selected net on at least two copper layers. Enable it to require this on every copper layer traversed by the through via. The setting is saved per zone as `RequireAllCopperLayers`. Legacy `OnlyFilledCopper=true` settings migrate to the stricter all-layer mode; unchecked legacy settings now require at least two connected layers instead of allowing single-layer placement. The checkbox never disables collision checks.
 
 Generated vias are marked as free vias when supported by the KiCad API. This prevents KiCad's automatic via-net update from changing their assigned net when several filled zones overlap.
 
@@ -69,6 +69,86 @@ If everything goes fine you'll get something like this:
 ViaStitcher checks pads, tracks, vias, footprint zones, board edges, and items belonging to other nets before placing each via. Complex boards may still expose cases not covered by the plugin, so DRC verification remains essential.
 
 Use **Clear** to remove matching vias from the selected zone. With **Clear only plugin placed vias** enabled, only vias belonging to that zone's ViaStitcher group are removed. Disable it to remove any via matching the selected net, size, and drill values inside the zone.
+
+## Optional island and gap refill
+
+Enable **Refill islands and gaps** to run a second pass after the selected grid
+style (Standard, Stagger, or Randomize). It uses the selected zone's actual
+filled copper polygons, including holes and disconnected islands on each layer.
+Small islands can receive a via even when no grid point falls inside them.
+Every existing via of the selected net blocks its minimum-spacing area,
+including manually placed vias and vias without qualifying copper connections.
+Only vias satisfying the chosen two-layer or all-layer connection requirement
+count toward electrical island coverage. These are separate checks.
+Vias on a different island do not count as that island's connection.
+
+**Refill spacing (min/max %)** defaults to **80 / 150**. These percentages apply
+to center-to-center distances normalized by the horizontal and vertical grid
+spacing: `hypot(dx / HSpacing, dy / VSpacing)`. Thus a horizontal 4 mm grid aims
+for 4 mm neighbors, allowing 3.2–6 mm in that direction. Limits must satisfy
+`0 < minimum <= 100 <= maximum`. They affect only additional vias; existing and
+first-pass vias are not moved. The option and both limits are saved per zone;
+older configurations default to refill disabled.
+
+Refill tries nominal grid sites first, then computes the centers of free
+horizontal and vertical intervals between obstacles. Track widths, via size,
+and the existing collision margins are included before computing these centers.
+The perpendicular direction is also checked for pockets offset in both axes.
+Regions narrower than the via diameter in either dimension are discarded.
+Areas proven entirely covered by via spacing exclusions are skipped; partially
+free areas remain candidates. New vias update the spacing index immediately.
+
+There is no fixed wall-clock or total-candidate cutoff. The finite search ends
+when a complete traversal adds no more vias; each successful placement completes
+one cell. The progress dialog remains cancellable. No increasingly fine search
+mesh is generated. Between valid geometric candidates, spacing near 100% of the
+requested pitch is preferred over packing at the minimum percentage.
+
+Minimum spacing is mandatory for every additional via, relative to **all**
+existing same-net vias and all previously added refill vias. The main grid pass
+retains its original collision rules and is not constrained by this percentage.
+The maximum is the preferred reach when extending an existing pattern. If that
+cannot reach an empty pocket, the search may seed that pocket without a nearby
+neighbor. Such seeds still obey minimum spacing and physical placement checks.
+
+This is a geometric placement heuristic, not an exhaustive search or a guarantee
+of uniform density. Narrow or obstructed copper may remain unserved; pad bounding
+boxes conservatively guide the search, so irregular pad corners may be missed. A progress
+dialog allows stopping the refill; vias already placed remain in the plugin's
+usual group and can be removed with **Clear only plugin placed vias**. The final
+message separates grid and additional vias and counts unserved islands per
+layer (the same XY island on two layers counts twice).
+
+Both passes check newly added vias as well as pre-existing board objects.
+These are the plugin's existing geometric checks, not KiCad's complete custom
+rule engine. Run KiCad DRC after stitching, including a zone refill. On older
+KiCad versions without access to filled polygon geometry, disable refill to
+continue using the regular grid.
+
+## Tests
+
+Run the geometry tests without KiCad:
+
+```sh
+python3 -m unittest discover -s tests -v
+```
+
+With KiCad 10's Python (including `pcbnew` and `wx`) and a desktop session:
+
+```sh
+export KICAD_CLI=/path/to/kicad-cli
+/path/to/kicad-python tests/kicad_integration.py /tmp/viastitcher-check
+python3 tests/check_drc.py /tmp/viastitcher-check
+/path/to/kicad-python tests/kicad_gui.py
+```
+
+The integration script builds synthetic two-layer boards with a blocked grid
+site, disconnected copper, and a backing plane. It checks all three styles,
+repeat runs, saved settings, validation, and removal of both passes. The DRC
+comparison rejects new violations and additional unconnected items. Native wx
+tests check control bounds, overlap, toggling, and loading old/new settings.
+The integration fixtures target KiCad 10; the existing plugin compatibility
+fallbacks for earlier versions are retained.
 
 ## TODO
 

@@ -131,3 +131,45 @@ msgstr "&Cancel"
 #: .\viastitcher_gui.py:185
 msgid "C&lear"
 msgstr "C&lear"
+
+msgid "Refill islands and gaps"
+msgstr "Refill islands and gaps"
+
+msgid "After the grid pass, try nearby positions in unserved copper islands and gaps."
+msgstr "After the grid pass, try nearby positions in unserved copper islands and gaps."
+
+msgid "Refill spacing (min/max %)"
+msgstr "Refill spacing (min/max %)"
+
+msgid "Percent of the horizontal and vertical grid spacing. Limits must include 100%."
+msgstr "Percent of the horizontal and vertical grid spacing. Limits must include 100%."
+
+msgid "Searching for additional via positions..."
+msgstr "Searching for additional via positions..."
+
+msgid "Additional vias: %d"
+msgstr "Additional vias: %d"
+
+msgid "Grid vias: {grid}\nAdditional vias: {extra}\nUnserved copper islands (per layer): {unserved}"
+msgstr "Grid vias: {grid}\nAdditional vias: {extra}\nUnserved copper islands (per layer): {unserved}"
+
+msgid "Refill stopped. Vias already placed have been kept."
+msgstr "Refill stopped. Vias already placed have been kept."
+
+msgid "Enter positive spacing and via sizes, drill smaller than diameter, non-negative clearance, and distance limits with 0 < minimum <= 100 <= maximum."
+msgstr "Enter positive spacing and via sizes, drill smaller than diameter, non-negative clearance, and distance limits with 0 < minimum <= 100 <= maximum."
+
+msgid "This KiCad version cannot read filled copper polygons. Disable refill to use the regular grid."
+msgstr "This KiCad version cannot read filled copper polygons. Disable refill to use the regular grid."
+
+msgid "Fill the selected copper zone before using refill."
+msgstr "Fill the selected copper zone before using refill."
+
+msgid "Additional vias: {vias}\nPositions checked: {checked}"
+msgstr "Additional vias: {vias}\nPositions checked: {checked}"
+
+msgid "Search limit reached. Partial results kept; some areas may remain unfilled."
+msgstr "Search limit reached. Partial results kept; some areas may remain unfilled."
+
+msgid "Require copper connection on all layers (off: at least two)"
+msgstr "Require copper connection on all layers (off: at least two)"

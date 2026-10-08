@@ -132,3 +132,45 @@ msgstr "&Annulla"
 #: .\viastitcher_gui.py:185
 msgid "C&lear"
 msgstr "&Pulisci"
+
+msgid "Refill islands and gaps"
+msgstr "Riempi isole e spazi vuoti"
+
+msgid "After the grid pass, try nearby positions in unserved copper islands and gaps."
+msgstr "Dopo la griglia, cerca posizioni vicine nelle isole di rame e negli spazi non serviti."
+
+msgid "Refill spacing (min/max %)"
+msgstr "Passo riempimento (min/max %)"
+
+msgid "Percent of the horizontal and vertical grid spacing. Limits must include 100%."
+msgstr "Percentuale del passo orizzontale e verticale. I limiti devono includere il 100%."
+
+msgid "Searching for additional via positions..."
+msgstr "Ricerca di ulteriori posizioni per i via..."
+
+msgid "Additional vias: %d"
+msgstr "Via aggiuntivi: %d"
+
+msgid "Grid vias: {grid}\nAdditional vias: {extra}\nUnserved copper islands (per layer): {unserved}"
+msgstr "Via sulla griglia: {grid}\nVia aggiuntivi: {extra}\nIsole di rame non servite (per strato): {unserved}"
+
+msgid "Refill stopped. Vias already placed have been kept."
+msgstr "Riempimento interrotto. I via già inseriti sono stati mantenuti."
+
+msgid "Enter positive spacing and via sizes, drill smaller than diameter, non-negative clearance, and distance limits with 0 < minimum <= 100 <= maximum."
+msgstr "Inserire passo e dimensioni positivi, foro minore del diametro, isolamento non negativo e limiti con 0 < minimo <= 100 <= massimo."
+
+msgid "This KiCad version cannot read filled copper polygons. Disable refill to use the regular grid."
+msgstr "Questa versione di KiCad non può leggere i poligoni di rame riempiti. Disattivare il riempimento aggiuntivo per usare la griglia normale."
+
+msgid "Fill the selected copper zone before using refill."
+msgstr "Riempire la zona di rame selezionata prima di usare il riempimento aggiuntivo."
+
+msgid "Additional vias: {vias}\nPositions checked: {checked}"
+msgstr "Via aggiuntivi: {vias}\nPosizioni controllate: {checked}"
+
+msgid "Search limit reached. Partial results kept; some areas may remain unfilled."
+msgstr "Limite di ricerca raggiunto. Risultati parziali mantenuti; alcune aree potrebbero restare vuote."
+
+msgid "Require copper connection on all layers (off: at least two)"
+msgstr "Richiedi rame su tutti gli strati (disattivato: almeno due)"

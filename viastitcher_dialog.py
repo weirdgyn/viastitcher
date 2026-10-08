@@ -13,6 +13,7 @@ import math
 
 from .viastitcher_gui import viastitcher_gui
 from .localization import _
+from .adaptive_fill import Region, ViaIndex, refill, validate_settings, capsule_section
 
 numpy_available = False
 try:
@@ -45,6 +46,14 @@ GUI_defaults = {
 FILL_STYLES = ("Standard", "Stagger", "Randomize")
 
 
+def _via_width(via, layer=None):
+    """KiCad 10 requires a layer when querying padstack-based via diameters."""
+    try:
+        return via.GetWidth(via.GetLayer() if layer is None else layer)
+    except TypeError:
+        return via.GetWidth()
+
+
 class ViaStitcherDialog(viastitcher_gui):
     """Class that gathers all the GUI controls."""
 
@@ -75,7 +84,8 @@ class ViaStitcherDialog(viastitcher_gui):
         for d in pcbnew.GetBoard().GetDrawings():
             if d.GetLayerName() == "Edge.Cuts":
                 self.board_edges.append(d)
-            if d.GetLayerName() == __plugin_config_layer_name__:
+            if (d.GetLayerName() == __plugin_config_layer_name__
+                    or d.GetLayer() == self.config_layer):
                 try:
                     new_config = json.loads(d.GetText())
                     if (
@@ -139,9 +149,15 @@ class ViaStitcherDialog(viastitcher_gui):
         )
         self.m_txtClearance.SetValue(defaults.get("Clearance", "0"))
         self.m_cbFillStyle.SetSelection(self._get_fill_style_index(defaults))
-        self.m_chkOnlyFilledCopper.SetValue(
-            defaults.get("OnlyFilledCopper", True)
+        self.m_chkAllCopperLayers.SetValue(
+            defaults.get("RequireAllCopperLayers", defaults.get("OnlyFilledCopper", False))
         )
+
+        self.m_chkAdaptiveFill.SetValue(defaults.get("AdaptiveFill", False))
+        self.m_txtMinSpacing.SetValue(str(defaults.get("MinSpacingPercent", "80")))
+        self.m_txtMaxSpacing.SetValue(str(defaults.get("MaxSpacingPercent", "150")))
+        self.m_chkAdaptiveFill.Bind(wx.EVT_CHECKBOX, self.onAdaptiveFillChanged)
+        self.onAdaptiveFillChanged()
 
         # Get default Vias dimensions
         via_size = None
@@ -312,7 +328,7 @@ class ViaStitcherDialog(viastitcher_gui):
                         self.area.GetLayer(), item.GetPosition(), 0
                     )
                     and (item.GetDrillValue() == drillsize)
-                    and (item.GetWidth() == viasize)
+                    and (_via_width(item) == viasize)
                     and (item.GetNetname() == netname)
                 ):
                     self.board.Remove(item)
@@ -377,7 +393,7 @@ class ViaStitcherDialog(viastitcher_gui):
         for edge in self.board_edges:
             if edge.ShowShape() == "Line":
                 the_distance, _ = pnt2line(p1, edge.GetStart(), edge.GetEnd())
-                if the_distance <= clearance + via.GetWidth() / 2:
+                if the_distance <= clearance + _via_width(via) / 2:
                     return False
             if edge.ShowShape() == "Arc":
                 # distance from center of Arc and with angle within Arc angle should be outside Arc radius +- clearance + via Width/2
@@ -387,9 +403,9 @@ class ViaStitcherDialog(viastitcher_gui):
                 radius = norm(center - end)
                 dist = norm(p1 - center)
                 if (
-                    radius - (self.clearance + via.GetWidth() / 2)
+                    radius - (self.clearance + _via_width(via) / 2)
                     < dist
-                    < radius + (self.clearance + via.GetWidth() / 2)
+                    < radius + (self.clearance + _via_width(via) / 2)
                 ):
                     # via is in range need to check the angle
                     start_angle = math.atan2((start - center).y, (start - center).x)
@@ -411,7 +427,7 @@ class ViaStitcherDialog(viastitcher_gui):
         # --- 0. Edge ccuts check (Edge.Cuts) ---
         # set edge cuts range clearance (es. 0.5 mm)
         edge_clearance = pcbnew.FromMM(0.5)
-        check_dist = int(via.GetWidth() // 2 + edge_clearance)
+        check_dist = int(_via_width(via) // 2 + edge_clearance)
 
         for edge in self.board_edges:
             if edge.HitTest(via.GetPosition(), check_dist):
@@ -451,7 +467,7 @@ class ViaStitcherDialog(viastitcher_gui):
                 common_layers = via_layers & pad_layers
                 if common_layers:
                     p = via.GetPosition()
-                    accuracy = int(via.GetWidth() // 2 + safe_margin)
+                    accuracy = int(_via_width(via) // 2 + safe_margin)
                     if any(item.HitTest(p, accuracy, layer) for layer in common_layers):
                         return True
 
@@ -471,7 +487,7 @@ class ViaStitcherDialog(viastitcher_gui):
                         dist
                         <= self.clearance
                         + width // 2
-                        + via.GetWidth() / 2
+                        + _via_width(via) / 2
                         + safe_margin
                     ):
                         return True
@@ -485,7 +501,7 @@ class ViaStitcherDialog(viastitcher_gui):
                 common_layers = via_layers & pad_layers
                 if common_layers:
                     p = via.GetPosition()
-                    accuracy = via.GetWidth() // 2
+                    accuracy = _via_width(via) // 2
                     if any(item.HitTest(p, accuracy, layer) for layer in common_layers):
                         return True
             elif type(item) is pcbnew.PCB_VIA:
@@ -503,7 +519,7 @@ class ViaStitcherDialog(viastitcher_gui):
                 common_layers = via_layers & zone_layers
                 if common_layers:
                     p = via.GetPosition()
-                    accuracy = via.GetWidth() // 2
+                    accuracy = _via_width(via) // 2
                     if any(
                         item.HitTestFilledArea(layer, p, accuracy)
                         for layer in common_layers
@@ -515,47 +531,194 @@ class ViaStitcherDialog(viastitcher_gui):
                     dist, _ = pnt2line(
                         via.GetPosition(), item.GetStart(), item.GetEnd()
                     )
-                    if dist <= self.clearance + width // 2 + via.GetWidth() / 2:
+                    if dist <= self.clearance + width // 2 + _via_width(via) / 2:
                         return True
         return False
 
     def HasFilledCopperAt(self, position, layers, netcode, radius):
         """Return whether the selected net has filled copper around a via."""
 
-        samples = [position]
-        for index in range(32):
-            angle = 2 * math.pi * index / 32
-            sample_x = int(position.x + radius * math.cos(angle))
-            sample_y = int(position.y + radius * math.sin(angle))
-            if hasattr(pcbnew, "VECTOR2I"):
-                samples.append(pcbnew.VECTOR2I(sample_x, sample_y))
-            else:
-                samples.append(pcbnew.wxPoint(sample_x, sample_y))
-
         zones = [zone for zone in self.board.Zones() if zone.GetNetCode() == netcode]
-        for layer in layers:
-            if not all(
-                any(
-                    zone.HitTestFilledArea(layer, sample, 0)
-                    for zone in zones
-                    if layer in set(zone.GetLayerSet().Seq())
-                )
-                for sample in samples
-            ):
-                return False
+        required = len(layers) if self.m_chkAllCopperLayers.GetValue() else 2
+        by_layer = [(layer, [zone for zone in zones if layer in zone.GetLayerSet().Seq()])
+                    for layer in layers]
+        # Reject missing layers before spending boundary samples on other layers.
+        candidates = [(layer, zones) for layer, zones in by_layer
+                      if any(zone.HitTestFilledArea(layer, position, 0) for zone in zones)]
+        if len(candidates) < required:
+            return False
+        samples = [self._point((position.x + radius * math.cos(i * math.pi / 16),
+                                position.y + radius * math.sin(i * math.pi / 16)))
+                   for i in range(32)]
+        connected = 0
+        for layer, zones in candidates:
+            if all(any(zone.HitTestFilledArea(layer, sample, 0) for zone in zones)
+                   for sample in samples):
+                connected += 1
+                if connected >= required:
+                    return True
+        return False
 
+    def _copper_layers(self):
+        return [layer for layer in self.board.GetEnabledLayers().Seq()
+                if pcbnew.IsCopperLayer(layer)]
+
+    def onAdaptiveFillChanged(self, event=None):
+        enabled = self.m_chkAdaptiveFill.GetValue()
+        self.m_txtMinSpacing.Enable(enabled)
+        self.m_txtMaxSpacing.Enable(enabled)
+
+    def _read_fill_settings(self):
+        """Validate everything before assigning a zone name or writing config."""
+        def number(control):
+            value = float(control.GetValue())
+            if not math.isfinite(value):
+                raise ValueError("Non-finite value")
+            return value
+
+        self.fill_settings = {
+            "drill": self.FromUserUnit(number(self.m_txtViaDrillSize)),
+            "diameter": self.FromUserUnit(number(self.m_txtViaSize)),
+            "pitch": (self.FromUserUnit(number(self.m_txtHSpacing)),
+                      self.FromUserUnit(number(self.m_txtVSpacing))),
+            "offset": (self.FromUserUnit(number(self.m_txtHOffset)),
+                       self.FromUserUnit(number(self.m_txtVOffset))),
+            "clearance": self.FromUserUnit(number(self.m_txtClearance)),
+            "adaptive": self.m_chkAdaptiveFill.GetValue(),
+        }
+        settings = self.fill_settings
+        settings["minimum"] = number(self.m_txtMinSpacing) / 100 if settings["adaptive"] else 0.8
+        settings["maximum"] = number(self.m_txtMaxSpacing) / 100 if settings["adaptive"] else 1.5
+        validate_settings(settings["pitch"], settings["diameter"],
+                          settings["minimum"], settings["maximum"])
+        if not 0 < settings["drill"] < settings["diameter"] or settings["clearance"] < 0:
+            raise ValueError("Invalid via geometry or clearance")
+        if not self.m_cbNet.GetStringSelection():
+            raise ValueError("No net selected")
+
+    def _filled_regions(self):
+        """Snapshot the selected zone's real filled outlines and holes per layer."""
+        regions = []
+        def points(chain):
+            return [(chain.CPoint(i).x, chain.CPoint(i).y)
+                    for i in range(chain.PointCount())]
+        for layer in self.area.GetLayerSet().Seq():
+            polygons = self.area.GetFilledPolysList(layer)
+            for i in range(polygons.OutlineCount()):
+                outline = points(polygons.COutline(i))
+                if len(outline) >= 3:
+                    regions.append(Region(layer, outline,
+                        [points(polygons.CHole(i, j)) for j in range(polygons.HoleCount(i))]))
+        return regions
+
+    @staticmethod
+    def _point(position):
+        point_type = getattr(pcbnew, "VECTOR2I", None) or pcbnew.wxPoint
+        return point_type(int(position[0]), int(position[1]))
+
+    def _place_via(self, position):
+        """Shared copper/collision checks and bookkeeping for both passes."""
+        settings = self.fill_settings
+        p = self._point(position)
+        layer_set = self.area.GetLayerSet()
+        layers = self._copper_layers()
+        netcode = self.board.GetNetcodeFromNetname(self.m_cbNet.GetStringSelection())
+        if not any(self.area.HitTestFilledArea(layer, p, 0) for layer in layer_set.Seq()):
+            return False
+        if not self.HasFilledCopperAt(
+                p, layers, netcode, settings["diameter"] / 2):
+            return False
+        via = pcbnew.PCB_VIA(self.board)
+        via.SetPosition(p)
+        via.SetLayerPair(pcbnew.F_Cu, pcbnew.B_Cu)
+        via.SetNetCode(netcode)
+        if hasattr(via, "SetIsFree"):
+            via.SetIsFree(True)
+        via.SetDrill(settings["drill"] + 2 * self.clearance)
+        via.SetWidth(settings["diameter"] + 2 * self.clearance)
+        if self.CheckOverlap(via):
+            return False
+        if self.clearance and not self.CheckClearance(via, self.area, self.clearance):
+            return False
+        via.SetWidth(settings["diameter"])
+        via.SetDrill(settings["drill"])
+        self.board.Add(via)
+        self.pcb_group.AddItem(via)
+        # The original snapshot omitted vias added during this run.
+        self.overlappings.append(via)
         return True
+
+    def _refill(self, origin, stagger):
+        settings = self.fill_settings
+        index = ViaIndex(settings["pitch"])
+        netcode = self.board.GetNetcodeFromNetname(self.m_cbNet.GetStringSelection())
+        required_layers = set(self._copper_layers())
+        # Build configuration-space obstacles once: positions forbidden to a
+        # via center, using the same margins as CheckOverlap. These sections
+        # guide candidates; the shared placement routine remains authoritative.
+        capsules, boxes = [], []
+        radius = settings["diameter"]/2 + self.clearance
+        margin = pcbnew.FromMM(.35)
+        for item in self.overlappings:
+            if type(item) is pcbnew.PCB_TRACK and item.GetNetCode() != netcode:
+                a,b = item.GetStart(),item.GetEnd()
+                capsules.append(((a.x,a.y),(b.x,b.y),
+                                 radius+self.clearance+margin+item.GetWidth()/2))
+            elif isinstance(item,pcbnew.PCB_VIA) and item.GetNetCode() == netcode:
+                p = item.GetPosition()
+                capsules.append(((p.x,p.y),(p.x,p.y), settings["drill"]/2 +
+                                 self.clearance+item.GetDrillValue()/2+pcbnew.FromMM(.5)))
+            elif type(item) is pcbnew.PAD or isinstance(item,pcbnew.PCB_VIA):
+                if not required_layers.intersection(item.GetLayerSet().Seq()):
+                    continue
+                box = item.GetBoundingBox()
+                boxes.append((box.GetLeft()-radius-margin, box.GetTop()-radius-margin,
+                              box.GetRight()+radius+margin, box.GetBottom()+radius+margin))
+        sections = {}
+        def blocked(axis,value):
+            key = axis,value
+            if key not in sections:
+                intervals = [capsule_section(a,b,r,axis,value) for a,b,r in capsules]
+                intervals.extend((box[axis],box[axis+2]) for box in boxes
+                                 if box[1-axis] <= value <= box[3-axis])
+                sections[key] = [interval for interval in intervals if interval is not None]
+            return sections[key]
+        for via in self.board.GetTracks():
+            if not isinstance(via, pcbnew.PCB_VIA) or via.GetNetCode() != netcode:
+                continue
+            spanned = required_layers.intersection(via.GetLayerSet().Seq())
+            point = (via.GetPosition().x, via.GetPosition().y)
+            # Every same-net via excludes nearby refill positions. Electrical
+            # island coverage is a separate property, never an index filter.
+            connects = (not self.m_chkAllCopperLayers.GetValue()
+                        or required_layers.issubset(spanned)) and self.HasFilledCopperAt(
+                            via.GetPosition(), sorted(spanned), netcode, _via_width(via) / 2)
+            touched = [i for i, region in enumerate(self.fill_regions)
+                       if connects and region.layer in spanned
+                       and region.fits(point, _via_width(via, region.layer) / 2)]
+            index.add(point, touched)
+        dialog = wx.ProgressDialog(_("Refill islands and gaps"),
+            _("Searching for additional via positions..."), parent=self,
+            style=wx.PD_APP_MODAL | wx.PD_CAN_ABORT | wx.PD_ELAPSED_TIME)
+        try:
+            def progress(added, examined):
+                keep_going, _skip = dialog.Pulse(_("Additional vias: {vias}\nPositions checked: {checked}").format(vias=added, checked=examined))
+                return keep_going
+            return refill(self.fill_regions, index, origin, settings["pitch"],
+                          settings["diameter"], settings["minimum"], settings["maximum"],
+                          self._place_via, stagger=stagger, progress=progress,
+                          blocked=blocked)
+        finally:
+            dialog.Destroy()
 
     def FillupArea(self):
         """Fills selected area with vias."""
 
-        drillsize = self.FromUserUnit(float(self.m_txtViaDrillSize.GetValue()))
-        viasize = self.FromUserUnit(float(self.m_txtViaSize.GetValue()))
-        step_x = self.FromUserUnit(float(self.m_txtHSpacing.GetValue()))
-        step_y = self.FromUserUnit(float(self.m_txtVSpacing.GetValue()))
-        offset_x = self.FromUserUnit(float(self.m_txtHOffset.GetValue()))
-        offset_y = self.FromUserUnit(float(self.m_txtVOffset.GetValue()))
-        clearance = self.FromUserUnit(float(self.m_txtClearance.GetValue()))
+        settings = self.fill_settings
+        viasize = settings["diameter"]
+        step_x, step_y = settings["pitch"]
+        offset_x, offset_y = settings["offset"]
+        clearance = settings["clearance"]
         fill_style = self._get_fill_style()
         self.randomize = fill_style == "Randomize"
         stagger = fill_style == "Stagger"
@@ -565,8 +728,6 @@ class ViaStitcherDialog(viastitcher_gui):
         bottom = bbox.GetBottom()
         right = bbox.GetRight()
         left = bbox.GetLeft()
-        netname = self.m_cbNet.GetStringSelection()
-        netcode = self.board.GetNetcodeFromNetname(netname)
         # commit = pcbnew.COMMIT()
         viacount = 0
         
@@ -588,8 +749,6 @@ class ViaStitcherDialog(viastitcher_gui):
 
         # Cycle through area bounding box checking and implanting vias
         # Refactored to row-major for stagger support
-        layer_set = self.area.GetLayerSet()
-        layers = list(layer_set.Seq())
         y = y_start
         row_index = 0
         while y <= eff_bottom:
@@ -608,59 +767,43 @@ class ViaStitcherDialog(viastitcher_gui):
                     xp = x
                     yp = y
 
-                if hasattr(pcbnew, "VECTOR2I"):
-                    p = pcbnew.VECTOR2I(int(xp), int(yp))
-                else:
-                    if hasattr(pcbnew, "wxPoint"):
-                        p = pcbnew.wxPoint(int(xp), int(yp))
-
-                if self.m_chkOnlyFilledCopper.GetValue():
-                    if not self.HasFilledCopperAt(p, layers, netcode, viasize / 2):
-                        x += step_x
-                        continue
-                elif not any(
-                    self.area.HitTestFilledArea(layer, p, 0) for layer in layers
-                ):
-                    x += step_x
-                    continue
-
-                via = pcbnew.PCB_VIA(self.board)
-                via.SetPosition(p)
-                via.SetLayerSet(layer_set)
-                via.SetNetCode(netcode)
-                if hasattr(via, "SetIsFree"):
-                    # Free vias keep the selected net instead of auto-updating from zones.
-                    via.SetIsFree(True)
-                # Set up via with clearance added to its size-> bounding box check will be OK in worst case, may be too conservative, but additional checks are possible if needed
-                # TODO: possibly take the clearance from the PCB settings instead of the dialog
-                # Clearance is all around -> *2
-                via.SetDrill(drillsize + 2 * clearance)
-                via.SetWidth(viasize + 2 * clearance)
-                # via.SetTimeStamp(__timecode__)
-                if not self.CheckOverlap(via):
-                    # Check clearance only if clearance value differs from 0 (disabled)
-                    if (clearance == 0) or self.CheckClearance(
-                        via, self.area, clearance
-                    ):
-                        via.SetWidth(viasize)
-                        via.SetDrill(drillsize)
-                        self.board.Add(via)
-                        # commit.Add(via)
-                        self.pcb_group.AddItem(via)
-                        viacount += 1
+                if self._place_via((xp, yp)):
+                    viacount += 1
                 x += step_x
             y += step_y
             row_index += 1
 
-        if viacount > 0:
+        if settings["adaptive"]:
+            result = self._refill((x_start, y_start), stagger)
+            message = _("Grid vias: {grid}\nAdditional vias: {extra}\nUnserved copper islands (per layer): {unserved}").format(
+                grid=viacount, extra=result.added, unserved=result.unserved)
+            if result.limited:
+                message += "\n" + _("Search limit reached. Partial results kept; some areas may remain unfilled.")
+            if result.cancelled:
+                message += "\n" + _("Refill stopped. Vias already placed have been kept.")
+            wx.MessageBox(message)
+        elif viacount > 0:
             wx.MessageBox(_("Implanted: %d vias!") % viacount)
-            # commit.Push()
-            pcbnew.Refresh()
         else:
             wx.MessageBox(_("No vias implanted!"))
+        pcbnew.Refresh()
 
     def onProcessAction(self, event):
         """Manage main button (Ok) click event."""
+        try:
+            self._read_fill_settings()
+        except (ValueError, OverflowError):
+            wx.MessageBox(_("Enter positive spacing and via sizes, drill smaller than diameter, non-negative clearance, and distance limits with 0 < minimum <= 100 <= maximum."))
+            return
+        if self.fill_settings["adaptive"]:
+            try:
+                self.fill_regions = self._filled_regions()
+            except (AttributeError, TypeError, RuntimeError):
+                wx.MessageBox(_("This KiCad version cannot read filled copper polygons. Disable refill to use the regular grid."))
+                return
+            if not self.fill_regions:
+                wx.MessageBox(_("Fill the selected copper zone before using refill."))
+                return
         zone_name = self.area.GetZoneName()
         if zone_name == "":
             for i in range(1000):
@@ -686,7 +829,10 @@ class ViaStitcherDialog(viastitcher_gui):
             "VOffset": self.m_txtVOffset.GetValue(),
             "Clearance": self.m_txtClearance.GetValue(),
             "FillStyle": self._get_fill_style(),
-            "OnlyFilledCopper": self.m_chkOnlyFilledCopper.GetValue(),
+            "RequireAllCopperLayers": self.m_chkAllCopperLayers.GetValue(),
+            "AdaptiveFill": self.m_chkAdaptiveFill.GetValue(),
+            "MinSpacingPercent": self.m_txtMinSpacing.GetValue(),
+            "MaxSpacingPercent": self.m_txtMaxSpacing.GetValue(),
         }
 
         if self.config_textbox is None:

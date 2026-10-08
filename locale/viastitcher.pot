@@ -131,3 +131,45 @@ msgstr ""
 #: .\viastitcher_gui.py:185
 msgid "C&lear"
 msgstr ""
+
+msgid "Refill islands and gaps"
+msgstr ""
+
+msgid "After the grid pass, try nearby positions in unserved copper islands and gaps."
+msgstr ""
+
+msgid "Refill spacing (min/max %)"
+msgstr ""
+
+msgid "Percent of the horizontal and vertical grid spacing. Limits must include 100%."
+msgstr ""
+
+msgid "Searching for additional via positions..."
+msgstr ""
+
+msgid "Additional vias: %d"
+msgstr ""
+
+msgid "Grid vias: {grid}\nAdditional vias: {extra}\nUnserved copper islands (per layer): {unserved}"
+msgstr ""
+
+msgid "Refill stopped. Vias already placed have been kept."
+msgstr ""
+
+msgid "Enter positive spacing and via sizes, drill smaller than diameter, non-negative clearance, and distance limits with 0 < minimum <= 100 <= maximum."
+msgstr ""
+
+msgid "This KiCad version cannot read filled copper polygons. Disable refill to use the regular grid."
+msgstr ""
+
+msgid "Fill the selected copper zone before using refill."
+msgstr ""
+
+msgid "Additional vias: {vias}\nPositions checked: {checked}"
+msgstr ""
+
+msgid "Search limit reached. Partial results kept; some areas may remain unfilled."
+msgstr ""
+
+msgid "Require copper connection on all layers (off: at least two)"
+msgstr ""

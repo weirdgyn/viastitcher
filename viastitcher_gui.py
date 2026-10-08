@@ -147,9 +147,41 @@ class viastitcher_gui ( wx.Dialog ):
 
 		bSizer1 = wx.BoxSizer( wx.VERTICAL )
 
-		self.m_chkOnlyFilledCopper = wx.CheckBox( self, wx.ID_ANY, _(u"Only place vias that connect filled copper of the selected net on multiple layers"), wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_chkOnlyFilledCopper.SetValue(True)
-		bSizer1.Add( self.m_chkOnlyFilledCopper, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_LEFT|wx.ALL|wx.EXPAND|wx.LEFT, 5 )
+		self.m_chkAdaptiveFill = wx.CheckBox( self, wx.ID_ANY, _(u"Refill islands and gaps"), wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_chkAdaptiveFill.SetToolTip( _(u"After the grid pass, try nearby positions in unserved copper islands and gaps.") )
+
+		bSizer1.Add( self.m_chkAdaptiveFill, 0, wx.ALL|wx.EXPAND, 5 )
+
+		fgAdaptive = wx.FlexGridSizer( 0, 3, 0, 0 )
+		fgAdaptive.AddGrowableCol( 1 )
+		fgAdaptive.AddGrowableCol( 2 )
+		fgAdaptive.SetFlexibleDirection( wx.BOTH )
+		fgAdaptive.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+
+		self.m_lblAdaptiveLimits = wx.StaticText( self, wx.ID_ANY, _(u"Refill spacing (min/max %)"), wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_lblAdaptiveLimits.Wrap( -1 )
+
+		fgAdaptive.Add( self.m_lblAdaptiveLimits, 0, wx.ALL|wx.EXPAND, 5 )
+
+		self.m_txtMinSpacing = wx.TextCtrl( self, wx.ID_ANY, _(u"80"), wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_txtMinSpacing.Enable( False )
+		self.m_txtMinSpacing.SetToolTip( _(u"Percent of the horizontal and vertical grid spacing. Limits must include 100%.") )
+		self.m_txtMinSpacing.SetMinSize( wx.Size( 120,-1 ) )
+
+		fgAdaptive.Add( self.m_txtMinSpacing, 0, wx.ALL|wx.EXPAND, 5 )
+
+		self.m_txtMaxSpacing = wx.TextCtrl( self, wx.ID_ANY, _(u"150"), wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_txtMaxSpacing.Enable( False )
+		self.m_txtMaxSpacing.SetToolTip( _(u"Percent of the horizontal and vertical grid spacing. Limits must include 100%.") )
+		self.m_txtMaxSpacing.SetMinSize( wx.Size( 120,-1 ) )
+
+		fgAdaptive.Add( self.m_txtMaxSpacing, 0, wx.ALL|wx.EXPAND, 5 )
+
+
+		bSizer1.Add( fgAdaptive, 0, wx.ALL|wx.EXPAND, 5 )
+
+		self.m_chkAllCopperLayers = wx.CheckBox( self, wx.ID_ANY, _(u"Require copper connection on all layers (off: at least two)"), wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer1.Add( self.m_chkAllCopperLayers, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_LEFT|wx.ALL|wx.EXPAND|wx.LEFT, 5 )
 
 		self.m_chkClearOwn = wx.CheckBox( self, wx.ID_ANY, _(u"Clear only plugin placed vias"), wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_chkClearOwn.SetValue(True)

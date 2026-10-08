@@ -56,6 +56,7 @@ jobs:
           cp \
             __init__.py \
             defaults.json \
+            adaptive_fill.py \
             localization.py \
             viastitcher.png \
             viastitcher_dialog.py \

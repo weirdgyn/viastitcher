@@ -1,1 +1,1 @@
-{"HSpacing": "2", "VSpacing": "2", "HOffset": "0", "VOffset": "0", "Clearance": "0", "Randomize": false}
+{"HSpacing": "2", "VSpacing": "2", "HOffset": "0", "VOffset": "0", "Clearance": "0", "Randomize": false, "AdaptiveFill": false, "MinSpacingPercent": "80", "MaxSpacingPercent": "150", "RequireAllCopperLayers": false}
