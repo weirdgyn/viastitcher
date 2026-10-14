@@ -226,11 +226,10 @@ class ViaStitcherDialog(viastitcher_gui):
 
         self.overlappings = []
 
+        # Rule areas are independent of net and zone name. Keep all of them:
+        # a via's copper can cross an outline even when its center cannot.
         for zone in self.board.Zones():
-            if zone.GetZoneName() != self.area.GetZoneName():
-                if zone.GetNetname() != self.net:
-                    if zone.GetBoundingBox().Intersects(area_bbox):
-                        self.overlappings.append(zone)
+            self.overlappings.append(zone)
 
         for item in tracks:
             if (type(item) is pcbnew.PCB_VIA) and (
@@ -244,15 +243,9 @@ class ViaStitcherDialog(viastitcher_gui):
             if item.GetBoundingBox().Intersects(area_bbox):
                 for pad in item.Pads():
                     self.overlappings.append(pad)
-                for zone in item.Zones():
-                    self.overlappings.append(zone)
-
-        # TODO: change algorithm to 'If one of the candidate area's edges overlaps with target area declare candidate as overlapping'
-        for i in range(0, self.board.GetAreaCount()):
-            item = self.board.GetArea(i)
-            if item.GetBoundingBox().Intersects(area_bbox):
-                if item.GetNetname() != self.net:
-                    self.overlappings.append(item)
+            # Footprint rule areas may extend beyond the footprint's body.
+            for zone in item.Zones():
+                self.overlappings.append(zone)
 
     def GetAreaConfig(self):
         """Check selected area (if any) and verify if it is a valid container for vias.
@@ -438,8 +431,22 @@ class ViaStitcherDialog(viastitcher_gui):
         via_bbox.Inflate(safe_margin)
 
         for item in self.overlappings:
-            # 1. ignore copper filled zones
+            # 1. Rule areas have outlines, not filled copper. Check the actual
+            # via layer span and copper radius before ignoring ordinary zones.
+            # Older KiCad versions call rule areas keepouts.
             if type(item).__name__ in ["ZONE", "FP_ZONE", "PCB_ZONE", "ZONE_CONTAINER"]:
+                is_rule_area = (item.GetIsRuleArea() if hasattr(item, "GetIsRuleArea")
+                                else item.GetIsKeepout())
+                if is_rule_area and item.GetDoNotAllowVias():
+                    common_layers = (set(via.GetLayerSet().Seq())
+                                     & set(item.GetLayerSet().Seq()))
+                    common_layers = [layer for layer in common_layers
+                                     if pcbnew.IsCopperLayer(layer)]
+                    if common_layers:
+                        radius = int(math.ceil(max(_via_width(via, layer)
+                                                   for layer in common_layers) / 2))
+                        if item.Outline().Collide(via.GetPosition(), radius):
+                            return True
                 continue
 
             # 2. handling of the same net points
